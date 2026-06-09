@@ -1,0 +1,35 @@
+{
+  // =====================================================================
+  //  LaTeX Workshop — proyecto de tesis (doctorado-escrito/)
+  // ---------------------------------------------------------------------
+  //  La compilacion usa latexmk, que lee doctorado-escrito/.latexmkrc.
+  //  Ahi ya estan configurados:
+  //     - la salida a la carpeta build/
+  //     - la opcion -shell-escape (necesaria para minted)
+  //  Por eso la receta de abajo NO repite esas opciones: deja que mande
+  //  el .latexmkrc (asi compila igual desde la terminal con `latexmk`).
+  // =====================================================================
+
+  // Donde queda el PDF/SyncTeX para el visor (coincide con build/ del .latexmkrc)
+  "latex-workshop.latex.outDir": "%DIR%/build",
+
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-pdf",
+        "%DOC%"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    { "name": "latexmk", "tools": ["latexmk"] }
+  ],
+
+  // Construir al guardar (opcional; comenta esta linea si preferis solo el boton play)
+  "latex-workshop.latex.autoBuild.run": "onSave"
+}

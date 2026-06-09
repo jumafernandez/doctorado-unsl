@@ -31,15 +31,21 @@ doctorado-escrito/
 
 ## Cómo compilar
 
-**Local** (necesita TeX Live y `latexmk`):
+**VS Code + LaTeX Workshop** (setup recomendado): abrí el repo `doctorado-unsl`
+y apretá ▶ (o guardá, compila al guardar). La configuración está en
+`.vscode/settings.json` (raíz del repo) y en `doctorado-escrito/.latexmkrc`:
+el PDF queda en `build/` y `minted` funciona solo (shell-escape ya activado).
+
+**Terminal** (necesita TeX Live y `latexmk`):
 
 ```bash
+cd doctorado-escrito
 latexmk          # genera build/thesis.pdf
 latexmk -c       # limpia auxiliares
 ```
 
-**Overleaf:** subir la carpeta y compilar con pdfLaTeX. El resaltado de código
-(`minted`) ya funciona en Overleaf sin configuración extra.
+**Overleaf:** subir la carpeta y compilar con pdfLaTeX (minted funciona sin
+configuración extra).
 
 ### Requisitos
 - TeX Live **completo** (o Overleaf).
