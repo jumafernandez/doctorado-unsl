@@ -1,0 +1,324 @@
+\documentclass[reqno,12pt,oneside]{report} 
+% right-side equation numbering, 12 point font, print one-sided 
+%\documentclass[reqno,12pt,twoside,openright]{report} % right-side equation numbering, 12 point font, print two-sided, Chapters start on odd pages. Rackham only accepts one-sided, so this is for personal printings.
+
+\usepackage[LGR,T1]{fontenc}
+\newcommand{\textgreek}[1]{\begingroup\fontencoding{LGR}\selectfont#1\endgroup}
+\usepackage{CJKutf8}
+
+\usepackage[spanish, es-tabla, es-nosectiondot, es-nolists, es-noindentfirst, es-nodecimaldot]{babel}
+\usepackage{rac}         % Use Rackham thesis style file
+\usepackage{aas_macros}  % To allow the reading of ADS journal references in the bibliography
+\usepackage[intlimits]{amsmath} % Puts the limits of integrals on top and bottom
+\usepackage{amsxtra}     % Use various AMS packages
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}    % Add some packages for figures. Read epslatex.pdf on ctan.tug.org
+\usepackage{rotating}
+\usepackage[usenames, dvipsnames]{color}
+\usepackage{epsfig}
+% \usepackage{subfigure}   % To make subfigures. Read subfigure.pdf on ctan.tug.org
+\usepackage{verbatim}
+\usepackage{natbib}      % Allows you to use BibTeX
+\usepackage[printonlyused]{acronym} % For the List of Abbreviations. Read acronym.pdf on ctan.tug.org
+\usepackage{setspace}    % Allows you to specify the line spacing
+\usepackage{titlesec}
+\usepackage[font={small,bf}]{caption}
+%\usepackage{bera}% optional: just to have a nice mono-spaced font
+\usepackage{listings}
+\usepackage{xcolor}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+
+\usepackage{courier}
+\usepackage{setspace}
+
+\usepackage[bottom]{footmisc}
+
+% ----
+% ----
+
+\usepackage{graphicx}
+
+\usepackage{amssymb,amsmath}
+
+\usepackage[spanish]{hyperref}
+\renewcommand\UrlFont{\color{ForestGreen}\rmfamily}
+
+% \usepackage{cleveref}
+\usepackage{soul}
+\usepackage{color}
+\usepackage{subcaption}
+\usepackage{algorithm, algpseudocode}
+% \usepackage{makeidx}
+% \makeindex
+
+\usepackage{amsmath}
+\DeclareMathOperator*{\argmax}{argmax} % thin space, limits underneath in displays
+\usepackage{makecell}
+\usepackage{multirow}
+
+% \usepackage{upmath}
+\usepackage{minted}
+\usepackage{xcolor}
+
+\usepackage{adjustbox}
+
+\usepackage{etoolbox}
+\patchcmd{\part}{\thispagestyle{plain}}{\thispagestyle{empty}}{}{}
+
+\definecolor{lightgray}{rgb}{0.95, 0.95, 0.95}
+\definecolor{console}{rgb}{0.4, 0.4, 0.4}
+
+\algtext*{EndWhile}% Remove "end while" text
+\algtext*{EndIf}% Remove "end if" text
+\algtext*{EndFor}% Remove "end for" text
+
+\newcommand{\algorithmautorefname}{Algoritmo}
+\floatname{algorithm}{Algoritmo}
+\renewcommand{\algorithmicif}{\textbf{si}}
+\renewcommand{\algorithmicelse}{\textbf{sino}}
+\renewcommand{\algorithmicthen}{\textbf{entonces}}
+\renewcommand{\algorithmicend}{\textbf{fin}}
+\renewcommand{\algorithmicwhile}{\textbf{mientras}}
+\renewcommand{\algorithmicfor}{\textbf{por cada}}
+\renewcommand{\algorithmicdo}{\textbf{hacer}}
+\renewcommand{\algorithmicprocedure}{\textbf{procedimiento}}
+\renewcommand{\algorithmicfunction}{\textbf{función}}
+\renewcommand{\Return}{\textbf{retornar} }
+
+\newcommand{\inputindent}{\hspace*{\algorithmicindent}\hspace*{\algorithmicindent}\hspace{.2em} }
+\newcommand{\localvarsindent}{\inputindent\inputindent \hspace{.56em} }
+\newcommand{\Returns}{\textbf{retorna} }
+\newcommand{\Or}{\textbf{o }}
+\newcommand{\In}{\textbf{en }}
+\newcommand{\Input}{\textbf{entrada: }}
+\newcommand{\LocalVariables}{\textbf{variables locales: }}
+\newcommand{\GlobalVariables}{\textbf{variables globales: }}
+\newcommand{\hlinew}{\rule{\linewidth}{1pt} }
+
+\definecolor{dgreen_100}{RGB}{139, 195, 74}
+\definecolor{dgreen_90}{RGB}{150, 200, 91}
+\definecolor{dgreen_70}{RGB}{173, 212, 127}
+\definecolor{dgreen_50}{RGB}{197, 225, 164}
+\definecolor{dgreen_25}{RGB}{226, 240, 210}
+
+\definecolor{cloud_green}{RGB}{58, 182, 78}
+\definecolor{could_orange}{RGB}{255, 165, 0}
+
+% ----
+% ----
+
+\newcommand{\ttq}{\texttt{\char`\"}}
+
+\newenvironment{dedication}
+{\clearpage           % we want a new page
+\thispagestyle{empty}% no header and footer
+\vspace*{\stretch{1}}% some space at the top 
+\slshape             % the text is in italics
+\raggedleft          % flush to the right margin
+}
+{\par % end the paragraph
+\vspace{\stretch{3}} % space at bottom is three times that at the top
+\clearpage           % finish off the page
+}
+
+\newcommand{\tab}[1]{\hspace{.04\textwidth}\rlap{#1}}
+
+\definecolor{lightgray}{rgb}{.9,.9,.9}
+\definecolor{darkgray}{rgb}{.4,.4,.4}
+\definecolor{purple}{rgb}{0.65, 0.12, 0.82}
+
+\titleformat{\section}{\normalfont\Large\bfseries}{\S\thesection}{1em}{}
+\titleformat{\subsection}{\fontsize{15}{15}\bfseries}{\S\thesubsection}{0.5em}{}
+\titleformat{\chapter}[display]
+        {\normalfont\Large\bfseries\centering}{\chaptertitlename\ \thechapter}{0pt}{\MakeUppercase}
+
+\titlespacing*{\subsection}{0pt}{2\baselineskip}{0.5\baselineskip} % \titlespacing*{<command>}{<left>}{<before-sep>}{<after-sep>}
+\titlespacing*{\section}{0pt}{2\baselineskip}{1\baselineskip} % \titlespacing*{<command>}{<left>}{<before-sep>}{<after-sep>}
+
+
+\doublespacing           % \onehalfspacing for 1.5 spacing, \doublespacing for 2.0 spacing.
+\newcommand{\sun}{\ensuremath{\odot}} % sun symbol is \sun
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\renewcommand{\figurename}{Figura}
+\renewcommand{\tablename}{Tabla}
+
+% Various theorem environments. All of the following have the same numbering
+% system as theorem.
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{prop}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{assumption}[theorem]{Assumption}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definici\'on}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{condition}[theorem]{Condition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{introduction}[theorem]{Introduction}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\numberwithin{theorem}{chapter}     % Numbers theorems "x.y" where x
+                                    % is the section number, y is the
+                                    % theorem number
+
+\renewcommand{\thetheorem}{\arabic{chapter}.\arabic{theorem}}
+
+\makeatletter                      % This sequence of commands will
+\let\c@equation\c@theorem          % incorporate equation numbering
+\makeatother                       % into the theorem numbering scheme
+
+\renewcommand{\theenumi}{(\roman{enumi})}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% If printing two-sided, this makes sure that any blank page at the 
+% end of a chapter will not have a page number. 
+\makeatletter
+\def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else
+\hbox{}
+\thispagestyle{empty}
+\newpage
+\if@twocolumn\hbox{}\newpage\fi\fi\fi}
+\makeatother 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%This command creates a box marked ``To Do'' around text.
+%To use type \todo{  insert text here  }.
+
+\newcommand{\todo}[1]{\vspace{5 mm}\par \noindent
+\marginpar{\textsc{To Do}}
+\framebox{\begin{minipage}[c]{0.95 \textwidth}
+\tt\begin{center} #1 \end{center}\end{minipage}}\vspace{5 mm}\par}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\bibliographystyle{plain}    % Set the bibliography style. apalike <- ver de hacerlo funcionar, agu04, plain, alpha, etc.
+
+\titlepage{Determinación del Perfil del Autor en Contextos de Clasificación Anticipada de Texto para Múltiples Dominios}
+{Sergio Gastón  Burdisso\\\vspace{20mm}\includegraphics[scale=0.2]{images/logo_unsl}}{Doctor en ciencias de la computaci\'on}
+{Facultad de Ciencias Físico, Matemáticas y Naturales}{2015}
+{Marcelo Errecalde, Director$^\star$\\
+Manuel Montes-y-Gómez, Co-Director$^{\star\star}$\\
+\\
+$\star$ \emph{\small{Universidad Nacional de San Luis, Argentina.}}\\
+$\star\star$ \emph{\small{Instituto Nacional de Astrofísica, Óptica y Electrónica, México.}}}
+
+\newpage\null\thispagestyle{empty}\newpage
+
+% Begin the front matter as required by Rackham dissertation guidelines
+\initializefrontsections
+
+% Optional Frontispiece
+%\frontispiece{\includegraphics[width=6in]{Intro/logo_unsl} Universidad Nacional de San Luis}
+
+% Optional, but recommended, Copyright page
+%\copyrightpage{Sergio Burdisso}
+
+% Page numbering. If you don't include a frontispiece or copyright page, you'll need to change this for two-sided printing.
+\makeatletter
+\if@twoside \setcounter{page}{4} \else \setcounter{page}{1} \fi
+\makeatother
+
+% Optional Acknowledgements page
+%\startacknowledgementspage
+%\input{chapters/acknowledgements}
+%\label{Acknowledgements}
+%\newpage\null\thispagestyle{empty}\newpage
+%\newpage\null\thispagestyle{empty}\newpage
+% Optional Preface page
+%\startprefacepage
+%\input{Preface}
+%\label{Preface}
+
+% Table of contents, list of figures, etc.
+\tableofcontents     % Required
+% \listoffigures       % Required if there is more than one figure
+% \newpage\null\thispagestyle{empty}\newpage
+%\listoftables        % Required if there is more than one table
+%\listofmaps          % Required if there is more than one map
+% \listofappendices    % Required if there is more than one appendix
+% \newpage\null\thispagestyle{empty}\newpage
+
+\listofabbreviations % Optional. Abbreviations should be stored in a file named abbr.tex
+\newpage\null\thispagestyle{empty}\newpage
+
+\startthechapters
+
+\part{INTRODUCCIÓN}
+\label{part1}
+
+\acresetall
+\chapter{Introducción}
+\label{cap1}
+\input{chapters/cap1}
+
+%\part{REVISIÓN DE ANTECEDENTES TEÓRICOS}
+%\label{part2}
+
+%\acresetall
+%\chapter{Aprendizaje Automático Supervisado}
+%\label{cap2}
+%\input{chapters/cap2}
+
+%\acresetall
+%\chapter{Clasificación de Texto}
+%\label{cap3}
+%\input{chapters/cap3}
+
+%\part{CONTRIBUCIONES}
+%\label{part3}
+
+%\acresetall
+%\chapter{Un Nuevo Clasificador de Texto para la Detección Anticipada de Riesgos: Depresión en Redes Sociales}
+% \chapter{Un Nuevo Modelo de Aprendizaje Automático Supervisado para Clasificación de Textos}
+%\label{cap:ss3}
+%\input{chapters/cap5}
+
+%\acresetall
+%\chapter{Un Clasificador con n-gramas Dinámicos para la Detección Anticipada de Riesgos en Redes Sociales}
+% \chapter{Un clasificador con n-gramas dinámicos para la detección anticipada de riesgos: Depresión y anorexia en redes sociales}
+%\label{cap:tss3}
+%\input{chapters/cap6}
+
+%\acresetall
+%\chapter{Participación en el eRisk 2019: Detección Anticipada de Anorexia y de Conductas Autodestructivas en Redes Sociales}
+% \chapter{Participación en el eRisk 2019: Detección de Depresión, Anorexia y Conductas autodestructivas en las Redes Sociales}
+%\label{cap:eRisk2019}
+%\input{chapters/cap7}
+
+%\acresetall
+%\chapter{PySS3: Un paquete Python de Código Abierto para Utilizar a SS3}  % o ahora PySS3
+\label{cap:pyss3}
+\input{chapters/cap8}
+
+%\part{CONCLUSIONES GENERALES}
+%\label{part4}
+
+%\acresetall
+%\chapter{Conclusiones y Trabajo Futuro}
+%\label{cap:conclusion}
+%\input{chapters/cap9}
+
+\startbibliography
+\newpage\null\thispagestyle{empty}\newpage
+\begin{singlespace} % Bibliography must be single spaced
+    \bibliography{references}   % Use the BibTeX file ``References.bib''.
+\end{singlespace}
+
+\end{document}
