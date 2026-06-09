@@ -1,0 +1,111 @@
+%==============================================================================
+%  config/commands.tex  --  Colores, entornos y macros propias
+%  Tesis doctoral - Universidad Nacional de San Luis (UNSL)
+%==============================================================================
+
+% ---- Colores ----------------------------------------------------------------
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}   % fondo de los bloques de codigo
+\definecolor{codeframe}{rgb}{0.80,0.80,0.80}
+
+% ---- Configuracion de minted (codigo fuente) --------------------------------
+% Se define aca porque depende de los colores de arriba. minted ya fue cargado
+% en config/packages.tex.
+\setminted{
+  fontsize=\small,
+  breaklines=true,        % corta lineas largas
+  breakanywhere=true,
+  tabsize=4,
+  frame=lines,
+  framesep=2mm,
+  bgcolor=codebg,
+  linenos=false,
+}
+\newcommand{\code}[1]{\mintinline{text}{#1}}   % codigo corto en linea
+
+% ---- Referencias cruzadas en espanol (cleveref) -----------------------------
+\crefname{figure}{figura}{figuras}
+\Crefname{figure}{Figura}{Figuras}
+\crefname{table}{tabla}{tablas}
+\Crefname{table}{Tabla}{Tablas}
+\crefname{equation}{ecuacion}{ecuaciones}
+\Crefname{equation}{Ecuacion}{Ecuaciones}
+\crefname{chapter}{capitulo}{capitulos}
+\Crefname{chapter}{Capitulo}{Capitulos}
+\crefname{section}{seccion}{secciones}
+\Crefname{section}{Seccion}{Secciones}
+\crefname{algorithm}{algoritmo}{algoritmos}
+\Crefname{algorithm}{Algoritmo}{Algoritmos}
+
+% ---- Operadores y delimitadores matematicos ---------------------------------
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+
+% ---- Entornos de teoremas (numerados por capitulo, en espanol) --------------
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}[chapter]
+\newtheorem{proposicion}[teorema]{Proposicion}
+\newtheorem{corolario}[teorema]{Corolario}
+\newtheorem{lema}[teorema]{Lema}
+\newtheorem{conjetura}[teorema]{Conjetura}
+
+\theoremstyle{definition}
+\newtheorem{definicion}[teorema]{Definicion}
+\newtheorem{ejemplo}[teorema]{Ejemplo}
+
+\theoremstyle{remark}
+\newtheorem{observacion}[teorema]{Observacion}
+\newtheorem{nota}[teorema]{Nota}
+
+\renewcommand{\proofname}{Demostraci\'on}   % entorno proof en espanol
+
+% rac.sty pone el numero de capitulo en romano; forzamos numeracion arabe
+% para que los teoremas queden "1.2" en lugar de "I.2" (consistente con secciones).
+\renewcommand{\theteorema}{\arabic{chapter}.\arabic{teorema}}
+
+% ---- Palabras clave de algoritmos en espanol (solo si el paquete esta) ------
+\makeatletter
+\@ifpackageloaded{algpseudocode}{%
+  \floatname{algorithm}{Algoritmo}%
+  \renewcommand{\algorithmicrequire}{\textbf{Entrada:}}%
+  \renewcommand{\algorithmicensure}{\textbf{Salida:}}%
+  \renewcommand{\algorithmicif}{\textbf{si}}%
+  \renewcommand{\algorithmicthen}{\textbf{entonces}}%
+  \renewcommand{\algorithmicelse}{\textbf{si no}}%
+  \renewcommand{\algorithmicend}{\textbf{fin}}%
+  \renewcommand{\algorithmicwhile}{\textbf{mientras}}%
+  \renewcommand{\algorithmicdo}{\textbf{hacer}}%
+  \renewcommand{\algorithmicfor}{\textbf{para cada}}%
+  \renewcommand{\algorithmicforall}{\textbf{para todo}}%
+  \renewcommand{\algorithmicreturn}{\textbf{retornar}}%
+  \renewcommand{\algorithmicprocedure}{\textbf{procedimiento}}%
+  \renewcommand{\algorithmicfunction}{\textbf{funcion}}%
+  \algtext*{EndWhile}% quita el "fin mientras"
+  \algtext*{EndIf}%    quita el "fin si"
+  \algtext*{EndFor}%   quita el "fin para"
+}{}
+\makeatother
+
+% ---- Marca de pendiente para borradores -------------------------------------
+% Uso:  \todo{revisar esta cifra}
+\newcommand{\todo}[1]{%
+  \textbf{\textcolor{red}{[TODO: #1]}}%
+  \marginpar{\textcolor{red}{\tiny$\blacktriangleleft$ TODO}}%
+}
+
+% ---- Entorno de dedicatoria -------------------------------------------------
+\newenvironment{dedicatoria}
+  {\clearpage \thispagestyle{empty} \vspace*{\stretch{1}} \slshape \raggedleft}
+  {\par \vspace{\stretch{3}} \clearpage}
+
+% ---- Encabezado para secciones preliminares sin número (Resumen, Abstract) --
+% Replica el estilo centrado de rac.sty y lo agrega al índice.
+\newcommand{\frontsection}[1]{%
+  \newpage
+  \addcontentsline{toc}{chapter}{#1}%
+  \hbox{}\twoinmar
+  \begin{center}\large\bfseries #1\end{center}%
+  \vspace{0.4in}%
+}

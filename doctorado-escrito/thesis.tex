@@ -1,0 +1,100 @@
+% !TEX program = pdflatex
+% !TEX options = --shell-escape
+%==============================================================================
+%  thesis.tex  --  Documento raíz de la tesis doctoral
+%  Universidad Nacional de San Luis (UNSL)
+%
+%  Cómo compilar:
+%    Local:    latexmk thesis.tex        (configuración en .latexmkrc)
+%    Overleaf: compilador pdfLaTeX; minted ya funciona (shell-escape on).
+%
+%  Estructura del proyecto:
+%    config/     paquetes (packages), macros (commands) y datos (metadata)
+%    styles/     estilos heredados — rac.sty es el FORMATO EXIGIDO por la UNSL
+%    chapters/   capítulos 00_resumen ... 08_conclusiones
+%    appendices/ apéndices A, B, ...
+%    images/     figuras por capítulo        tables/  tablas por capítulo
+%    build/      salida de la compilación (no se versiona)
+%==============================================================================
+\documentclass[12pt,oneside,reqno]{report}
+
+% Buscar paquetes/estilos propios también en styles/
+\makeatletter
+\def\input@path{{styles/}}
+\makeatother
+
+% rac.sty define el formato de tesis (portada, márgenes, índices). Se carga
+% temprano —antes que hyperref— para preservar los marcadores del PDF.
+\usepackage{rac}
+
+\input{config/packages}    % paquetes y configuración (hyperref al final)
+\input{config/commands}    % colores, minted, teoremas, algoritmos, macros
+\input{config/metadata}    % título, autor, director, año...
+
+\begin{document}
+
+% Estilo bibliográfico (natbib). Alternativas: abbrvnat, unsrtnat, agu04.
+\bibliographystyle{plainnat}
+
+%--------------------------------- PORTADA ------------------------------------
+\maketitlepage
+\newpage\null\thispagestyle{empty}\newpage
+
+%----------------------------- MATERIAL PRELIMINAR ----------------------------
+\initializefrontsections     % numeración romana (i, ii, iii...)
+
+% Opcionales (descomentar para usarlos):
+% \begin{dedicatoria} A quien corresponda. \end{dedicatoria}
+% \startacknowledgementspage \input{chapters/agradecimientos}
+
+\input{chapters/00_resumen}  % Resumen (y Abstract)
+
+\tableofcontents
+\listoffigures             % descomentar si hay más de una figura
+\listoftables              % descomentar si hay más de una tabla
+\listofabbreviations         % lista de abreviaturas (lee abbr.tex)
+\newpage\null\thispagestyle{empty}\newpage
+
+%--------------------------------- CAPÍTULOS ----------------------------------
+\startthechapters            % numeración arábiga y capítulos numerados
+
+\chapter{Introducción}\label{cap:introduccion}
+\input{chapters/01_introduccion}
+
+\chapter{Estado del arte}\label{cap:estado-del-arte}
+\input{chapters/02_estado_del_arte}
+
+\chapter{Marco teórico}\label{cap:marco-teorico}
+\input{chapters/03_marco_teorico}
+
+\chapter{Metodología}\label{cap:metodologia}
+\input{chapters/04_metodologia}
+
+\chapter{Experimentos}\label{cap:experimentos}
+\input{chapters/05_experimentos}
+
+\chapter{Resultados}\label{cap:resultados}
+\input{chapters/06_resultados}
+
+\chapter{Discusión}\label{cap:discusion}
+\input{chapters/07_discusion}
+
+\chapter{Conclusiones y trabajo futuro}\label{cap:conclusiones}
+\input{chapters/08_conclusiones}
+
+%--------------------------------- APÉNDICES ----------------------------------
+\startappendices
+\appendix{Material suplementario}\label{ap:material-suplementario}
+\input{appendices/A_material_suplementario}
+
+\appendix{Resultados adicionales}\label{ap:resultados-adicionales}
+\input{appendices/B_resultados_adicionales}
+
+%------------------------------- BIBLIOGRAFÍA ---------------------------------
+\startbibliography
+\newpage\null\thispagestyle{empty}\newpage
+\begin{singlespace}
+  \bibliography{references}
+\end{singlespace}
+
+\end{document}

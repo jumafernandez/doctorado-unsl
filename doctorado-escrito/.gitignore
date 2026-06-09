@@ -1,0 +1,38 @@
+# ============================ Artefactos de LaTeX ============================
+# Carpeta de salida: se conserva la carpeta, se ignora su contenido.
+build/*
+!build/.gitkeep
+
+# Auxiliares (por si se compila fuera de build/)
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.loa
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.acn
+*.acr
+*.alg
+*.glo
+*.gls
+*.ist
+*.run.xml
+*.bcf
+
+# minted (resaltado de código)
+_minted*/
+*.pyg
+
+# ================================ SO / editor ================================
+.DS_Store
+*~
+*.swp
+.vscode/
+.idea/

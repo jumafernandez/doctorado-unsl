@@ -1,0 +1,32 @@
+%=============================== Experimentos =================================
+\todo{Diseño experimental: datos, configuración, métricas y baselines.}
+
+\section{Conjuntos de datos}
+\todo{Describir los datos utilizados.}
+
+\section{Configuración experimental}
+Un fragmento de código de ejemplo, resaltado con \texttt{minted}:
+
+\begin{minted}{python}
+def accuracy(y_true, y_pred):
+    """Proporción de predicciones correctas."""
+    correctas = sum(int(a == b) for a, b in zip(y_true, y_pred))
+    return correctas / len(y_true)
+\end{minted}
+
+\section{Métricas}
+Las métricas reportadas se resumen en la \cref{tab:metricas}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Resultados de ejemplo sobre el conjunto de prueba.}
+  \label{tab:metricas}
+  \begin{tabular}{lcc}
+    \toprule
+    Modelo            & Precisión & F\textsubscript{1} \\
+    \midrule
+    Línea base        & 0,71      & 0,69 \\
+    Enfoque propuesto & \textbf{0,84} & \textbf{0,83} \\
+    \bottomrule
+  \end{tabular}
+\end{table}

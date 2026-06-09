@@ -1,0 +1,38 @@
+%==============================================================================
+%  config/metadata.tex  --  Datos de la tesis y portada
+%  >>> EDITA ESTOS VALORES <<<
+%==============================================================================
+
+% ---- Datos principales ------------------------------------------------------
+\newcommand{\thesisTitle}{Título provisional de la tesis doctoral}
+\newcommand{\thesisAuthor}{Juan Manuel Fernández}
+\newcommand{\thesisProgram}{Doctorado en Ciencias de la Computación}
+\newcommand{\thesisFaculty}{Facultad de Ciencias Físico, Matemáticas y Naturales}
+\newcommand{\thesisUniversity}{Universidad Nacional de San Luis}
+\newcommand{\thesisYear}{2026}
+\newcommand{\thesisLogo}{logo_unsl}        % archivo en images/
+
+% ---- Dirección --------------------------------------------------------------
+\newcommand{\thesisDirector}{Nombre Apellido, Director}
+\newcommand{\thesisCoDirector}{Nombre Apellido, Co-Director}
+
+% ---- Metadatos del PDF (hyperref ya está cargado) ---------------------------
+\hypersetup{
+  pdftitle={\thesisTitle},
+  pdfauthor={\thesisAuthor},
+  pdfsubject={Tesis de \thesisProgram},
+}
+
+% ---- Portada (usa \titlepage definido en styles/rac.sty) --------------------
+% Argumentos de \titlepage: {título}{autor+logo}{programa}{facultad}{año}{jurado}
+\newcommand{\maketitlepage}{%
+  \titlepage
+    {\thesisTitle}
+    {\thesisAuthor\\\vspace{18mm}\includegraphics[scale=0.2]{\thesisLogo}}
+    {\thesisProgram}
+    {\thesisFaculty}
+    {\thesisYear}
+    {\thesisDirector\\
+     \thesisCoDirector\\[2ex]
+     \emph{\small \thesisUniversity, Argentina.}}%
+}

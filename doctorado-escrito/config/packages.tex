@@ -1,0 +1,108 @@
+%==============================================================================
+%  config/packages.tex  --  Paquetes y configuracion base
+%  Tesis doctoral - Universidad Nacional de San Luis (UNSL)
+%------------------------------------------------------------------------------
+%  Preambulo modernizado y deduplicado (junio 2026).
+%  Cambios clave respecto del template original:
+%    - Se ELIMINO el conflicto color/xcolor: ahora se carga SOLO xcolor.
+%    - Se quitaron cargas DUPLICADAS (graphicx, amsmath, setspace, color...).
+%    - Se removieron paquetes innecesarios para esta tesis (epsfig, CJKutf8,
+%      fontenc LGR/griego).
+%    - Se agregaron microtype y booktabs (tipografia y tablas modernas).
+%    - hyperref se carga casi al final, como corresponde, y cleveref despues.
+%    - Los paquetes de algoritmos se cargan de forma condicional.
+%==============================================================================
+
+% ---- Codificacion e idioma --------------------------------------------------
+\usepackage[utf8]{inputenc}      % archivos fuente en UTF-8 (acentos, n)
+\usepackage[T1]{fontenc}         % salida con acentos correctos / copiar-pegar
+\usepackage[spanish,es-tabla,es-noindentfirst,es-nodecimaldot]{babel}
+% es-tabla: los flotantes dicen "Tabla"; es-noindentfirst: sin sangria inicial.
+
+% ---- Fuentes ----------------------------------------------------------------
+\usepackage{lmodern}             % Latin Modern (buena cobertura T1)
+\usepackage{courier}             % monoespaciada para codigo en linea
+\usepackage{microtype}           % microtipografia: justificado mas prolijo
+
+% ---- Matematica -------------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amsxtra}
+\usepackage{mathtools}           % extiende amsmath (\DeclarePairedDelimiter...)
+
+% ---- Color: UN SOLO paquete (xcolor reemplaza por completo a color) ----------
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+% 'table' habilita colores de fila/celda; 'dvipsnames'/'svgnames' dan nombres.
+% NO cargar 'color' por separado: ese era el origen de los errores de choque.
+
+% ---- Figuras y tablas -------------------------------------------------------
+\usepackage{graphicx}
+\graphicspath{{images/}}         % raiz para \includegraphics (mas subcarpetas)
+\usepackage{rotating}            % figuras/tablas apaisadas
+\usepackage{subcaption}          % subfiguras (reemplaza al viejo 'subfigure')
+\usepackage[font={small,bf}]{caption}
+\usepackage{booktabs}            % \toprule \midrule \bottomrule
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{adjustbox}           % escalar/ajustar tablas y cajas anchas
+
+% ---- Espaciado, notas, varios -----------------------------------------------
+\usepackage{setspace}            % \onehalfspacing, \doublespacing
+\usepackage[bottom]{footmisc}    % notas al pie siempre al fondo de la pagina
+\usepackage{verbatim}
+\usepackage{soul}                % \hl (resaltar), \st (tachar)
+\usepackage{etoolbox}            % \patchcmd y utilidades de programacion
+
+% ---- Algoritmos (carga condicional) -----------------------------------------
+% algorithm + algorithmicx/algpseudocode estan en TeX Live completo y Overleaf.
+% Se cargan solo si estan disponibles para no romper entornos minimos.
+\IfFileExists{algpseudocode.sty}{%
+  \usepackage{algorithm}%
+  \usepackage{algpseudocode}%
+}{%
+  \PackageWarning{packages}{algpseudocode no encontrado: se omiten los entornos de algoritmos.}%
+}
+
+% ---- Codigo fuente: minted --------------------------------------------------
+% minted requiere compilar con  -shell-escape  y tener Pygments instalado
+% (pip install Pygments). En Overleaf funciona sin configuracion extra.
+% Alternativa sin dependencias: comentar esta linea y usar 'listings'.
+\usepackage[outputdir=build]{minted}
+
+% ---- Bibliografia -----------------------------------------------------------
+\usepackage{natbib}              % citas \citep / \citet (estilo en thesis.tex)
+% Por defecto se usa plainnat. El template trae agu04.bst en styles/ como
+% alternativa (estilo de la AGU); para usarlo: \bibliographystyle{agu04}.
+
+% ---- Abreviaturas / acronimos -----------------------------------------------
+\usepackage[printonlyused]{acronym}   % lista de abreviaturas (lee abbr.tex)
+
+% ---- Hiperenlaces (cargar casi al final) ------------------------------------
+\usepackage[spanish,unicode]{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=MidnightBlue,     % enlaces internos (capitulos, secciones)
+  citecolor=ForestGreen,      % citas bibliograficas
+  urlcolor=MidnightBlue,      % URLs
+  linktoc=all,                % en el indice, enlaza numero y texto
+}
+\renewcommand{\UrlFont}{\color{MidnightBlue}\rmfamily}
+
+% ---- Referencias cruzadas inteligentes (despues de hyperref) ----------------
+\usepackage[capitalise,noabbrev]{cleveref}   % \cref{...} -> "figura 3.1", etc.
+
+% rac.sty usa un tipo de entrada 'chap' en el indice; le indicamos a hyperref
+% su nivel de marcador para evitar el warning "bookmark level for unknown chap".
+\makeatletter
+\providecommand*{\toclevel@chap}{0}
+\makeatother
+
+% ---- Nota sobre estilos heredados del template ------------------------------
+% styles/aas_macros.sty  : macros de revistas astronomicas (ADS). NO se carga
+%   porque no es necesario en esta tesis; queda por compatibilidad. Si lo
+%   necesitaras: \usepackage{aas_macros}
+% styles/agu04.bst        : estilo bibliografico de la AGU (geofisica), opcional.
+% styles/rac.sty          : formato de tesis exigido (UNSL/Rackham); SE USA.
+
