@@ -43,6 +43,10 @@
 % 'table' habilita colores de fila/celda; 'dvipsnames'/'svgnames' dan nombres.
 % NO cargar 'color' por separado: ese era el origen de los errores de choque.
 
+% Colores institucionales UNSL (del escudo), para acentos del template:
+\definecolor{unslazul}{RGB}{48,48,144}       % azul del escudo
+\definecolor{unslceleste}{RGB}{120,192,240}  % celeste del escudo
+
 % ---- Figuras y tablas -------------------------------------------------------
 \usepackage{graphicx}
 \graphicspath{{images/}}         % raiz para \includegraphics (mas subcarpetas)
@@ -77,6 +81,26 @@
 \usepackage{soul}                % \hl (resaltar), \st (tachar)
 \usepackage{etoolbox}            % \patchcmd y utilidades de programacion
 
+% ---- Pagina: A4, margenes simetricos y encabezado ---------------------------
+% Reemplaza los margenes "Rackham" de rac.sty por A4 con margenes simetricos
+% (igual izquierda/derecha) y mas aire arriba/abajo. Agrega un encabezado con
+% el nombre del capitulo y el numero de pagina, con una linea debajo.
+\usepackage[a4paper,left=3cm,right=3cm,top=3cm,bottom=3cm,
+            headheight=15pt,headsep=0.7cm]{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}                                  % limpia encabezado y pie
+\fancyhead[L]{\nouppercase{\leftmark}}      % capitulo a la izquierda
+\fancyhead[R]{\thepage}                     % numero de pagina a la derecha
+\renewcommand{\headrulewidth}{0.4pt}        % linea bajo el encabezado
+\renewcommand{\footrulewidth}{0pt}
+% Aperturas de capitulo: sin encabezado, numero de pagina abajo-centro
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+}
+
 % ---- Algoritmos (carga condicional) -----------------------------------------
 % algorithm + algorithmicx/algpseudocode estan en TeX Live completo y Overleaf.
 % Se cargan solo si estan disponibles para no romper entornos minimos.
@@ -99,6 +123,9 @@
 \usepackage{natbib}              % citas \citep / \citet (estilo en thesis.tex)
 % Por defecto se usa plainnat. El template trae agu04.bst en styles/ como
 % alternativa (estilo de la AGU); para usarlo: \bibliographystyle{agu04}.
+% El encabezado de la bibliografia lo pone \startbibliography (estilo capitulo);
+% anulamos el encabezado propio de natbib para que no quede duplicado:
+\renewcommand{\bibsection}{}
 
 % ---- Abreviaturas / acronimos -----------------------------------------------
 \usepackage[printonlyused]{acronym}   % lista de abreviaturas (lee abbr.tex)
@@ -107,12 +134,12 @@
 \usepackage[spanish,unicode]{hyperref}
 \hypersetup{
   colorlinks=true,
-  linkcolor=MidnightBlue,     % enlaces internos (capitulos, secciones)
-  citecolor=ForestGreen,      % citas bibliograficas
-  urlcolor=MidnightBlue,      % URLs
+  linkcolor=unslazul,         % enlaces internos (capitulos, secciones)
+  citecolor=unslazul,         % citas bibliograficas
+  urlcolor=unslazul,          % URLs
   linktoc=all,                % en el indice, enlaza numero y texto
 }
-\renewcommand{\UrlFont}{\color{MidnightBlue}\rmfamily}
+\renewcommand{\UrlFont}{\color{unslazul}\rmfamily}
 
 % ---- Referencias cruzadas inteligentes (despues de hyperref) ----------------
 \usepackage[capitalise,noabbrev]{cleveref}   % \cref{...} -> "figura 3.1", etc.

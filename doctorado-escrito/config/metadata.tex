@@ -23,15 +23,44 @@
   pdfsubject={Tesis de \thesisProgram},
 }
 
-% ---- Portada (usa \titlepage definido en styles/rac.sty) --------------------
-% Argumentos de \titlepage: {título}{autor+logo}{programa}{facultad}{año}{jurado}
+% ---- Portada -----------------------------------------------------------------
+% Diseño propio (inspirado en la tesis de Maestría): título en color con línea,
+% bloque Autor/Dirección a dos columnas, logo y datos, con buen espaciado.
+% Para una portada más sobria, cambiá 'unslazul' por 'black'.
+\colorlet{portada}{unslazul}            % azul del escudo UNSL (definido en packages.tex)
+
 \newcommand{\maketitlepage}{%
-  \titlepage
-    {\thesisTitle}
-    {\thesisAuthor\\\vspace{18mm}\includegraphics[scale=0.2]{\thesisLogo}}
-    {\thesisProgram}
-    {\thesisFaculty}
-    {\thesisYear}
-    {\thesisDirector\\
-     \thesisCoDirector}%
+  \thispagestyle{empty}%
+  \begingroup
+  \centering
+  \vspace*{\stretch{1.3}}
+  {\Large\bfseries\color{portada}\thesisTitle\par}   % titulo (mas chico que antes)
+  \vspace{1em}
+  {\color{portada}\rule{\linewidth}{1pt}}\par
+  \vspace{\stretch{1}}
+  % --- Autor / Dirección, a dos columnas ---
+  \noindent
+  \begin{minipage}[t]{0.46\linewidth}
+    \raggedright\itshape Autor:\par\smallskip
+    \upshape\large \thesisAuthor
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.46\linewidth}
+    \raggedleft\itshape Dirección:\par\smallskip
+    \upshape \thesisDirector\\
+    \thesisCoDirector
+  \end{minipage}\par
+  \vspace{16mm}                                       % separacion fija: directores no se pegan al grado
+  Tesis presentada para obtener el grado de\par\smallskip
+  {\large\bfseries \thesisProgram}\par
+  \vspace{\stretch{1.3}}
+  \includegraphics[width=3.2cm]{\thesisLogo}\par
+  \vspace{\stretch{1.3}}
+  \thesisFaculty\par\smallskip
+  {\large\color{portada}\thesisUniversity}\par\smallskip
+  San Luis, Argentina\par
+  \vspace{1.4em}
+  \thesisYear\par
+  \vspace*{\stretch{1.3}}
+  \endgroup
+  \clearpage
 }

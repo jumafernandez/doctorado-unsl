@@ -114,7 +114,7 @@
 
 \def\dedicationpage#1{
  \newpage
- \addcontentsline{toc}{chapter}{DEDICATORIA}
+ \addcontentsline{toc}{chapter}{Dedicatoria}
  \hbox{ }
  \vertadjust
  \vfill
@@ -128,19 +128,19 @@
 
 \def\startacknowledgementspage{
  \newpage
- \addcontentsline{toc}{chapter}{AGRADECIMIENTOS}
+ \addcontentsline{toc}{chapter}{Agradecimientos}
  \hbox{ }
  \twoinmar
- \centerline{\large\bf AGRADECIMIENTOS}
+ \centerline{\large\bf Agradecimientos}
  \vspace{0.7in}
 }
 
 \def\startprefacepage{
  \newpage
- \addcontentsline{toc}{chapter}{PREFACIO}
+ \addcontentsline{toc}{chapter}{Prefacio}
  \hbox{ }
  \twoinmar
- \centerline{\large\bf PREFACIO}
+ \centerline{\large\bf Prefacio}
  \vspace{0.7in}
 }
 
@@ -156,7 +156,7 @@
 
 % jj: The only difference is \dotfill instead of \hfil.
 \def\l@chapter#1#2{\pagebreak[3]
- \vskip 1.0em plus 1pt \@tempdima 1.5em \begingroup % em is the width of capital M for the current font. -jg
+ \vskip 1.0em plus 1pt \@tempdima 2.3em \begingroup % em is the width of capital M for the current font. -jg
  \parindent \z@ \rightskip \@pnumwidth
  \parfillskip -\@pnumwidth
  {\bf \leavevmode #1}\dotfill \hbox to\@pnumwidth{\hss #2}\par
@@ -184,7 +184,7 @@
  \@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
  \hbox{ }
  \twoinmar
- \centerline{\large\bf TABLA DE CONTENIDOS}
+ \centerline{\large\bf Tabla de contenidos}
  \vspace{0.7in}
  \begin{singlespace}
   \@starttoc{toc}\if@restonecol\twocolumn\fi
@@ -193,11 +193,11 @@
 
 \def\listoffigures{%
  \newpage
- \addcontentsline{toc}{chapter}{LISTA DE FIGURAS}
+ \addcontentsline{toc}{chapter}{Lista de figuras}
  \@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
  \hbox{ }
  \twoinmar
- \centerline{\large\bf LISTA DE FIGURAS}
+ \centerline{\large\bf Lista de figuras}
  \vspace{0.7in}
  \begin{singlespace}
   \@starttoc{lof}\if@restonecol\twocolumn\fi
@@ -209,11 +209,11 @@
 
 \def\listoftables{%
  \newpage
- \addcontentsline{toc}{chapter}{LISTA DE TABLAS}
+ \addcontentsline{toc}{chapter}{Lista de tablas}
  \@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
  \hbox{ }
  \twoinmar
- \centerline{\large\bf LISTA DE TABLAS}
+ \centerline{\large\bf Lista de tablas}
  \vspace{0.7in}
  \begin{singlespace}
   \@starttoc{lot}\if@restonecol\twocolumn\fi
@@ -224,11 +224,11 @@
 
 \def\listofmaps{%
  \newpage
- \addcontentsline{toc}{chapter}{LIST OF MAPS}
+ \addcontentsline{toc}{chapter}{Lista de mapas}
  \@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
  \hbox{ }
  \twoinmar
- \centerline{\large\bf LIST OF MAPS}
+ \centerline{\large\bf Lista de mapas}
  \vspace{0.7in}
  \begin{singlespace}
   \@starttoc{lom}\if@restonecol\twocolumn\fi
@@ -238,11 +238,11 @@
 
 \def\listofappendices{%
  \newpage
- \addcontentsline{toc}{chapter}{LISTA DE AP\'ENDICES}
+ \addcontentsline{toc}{chapter}{Lista de ap\'endices}
  \@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
  \hbox{ }
  \twoinmar
- \centerline{\large\bf LISTA DE AP\'ENDICES}
+ \centerline{\large\bf Lista de ap\'endices}
  \vspace{0.7in}
  \begin{singlespace}
   \@starttoc{loa}\if@restonecol\twocolumn\fi
@@ -252,11 +252,11 @@
 
 \def\listofabbreviations{% Uses the acronym package -jg
  \newpage
- \addcontentsline{toc}{chapter}{LISTA DE ABREVIACIONES}
+ \addcontentsline{toc}{chapter}{Lista de abreviaciones}
  \@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
  \hbox{ }
  \twoinmar
- \centerline{\large\bf LISTA DE ABREVIACIONES }
+ \centerline{\large\bf Lista de abreviaciones }
  \vspace{0.7in}
  \begin{singlespace}
   \begin{acronym}
@@ -267,11 +267,11 @@
 
 \def\startabstractpage#1#2#3{% This formats the optional in-dissertation abstract - jg
  \newpage
- \addcontentsline{toc}{chapter}{RESUMEN}
+ \addcontentsline{toc}{chapter}{Resumen}
  \@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
  \hbox{ }
  \twoinmar
- \centerline{\large\bf RESUMEN}
+ \centerline{\large\bf Resumen}
  \vspace{0.25in}
  \begin{center}
   \begin{singlespace}
@@ -314,7 +314,7 @@
  \setcounter{chapter}{0}
  \setcounter{page}{1} % -- ...always begin with ii.
  \renewcommand{\thepage}{\arabic{page}}
- \pagestyle{plain}
+ \pagestyle{fancy}
  \def\tocname{toc}
 }
 
@@ -323,15 +323,20 @@
   \refstepcounter{chapter}
   \typeout{\@chapapp\space\thechapter.}
   \addtocontents{toc}{\hbox{ }}
-  \addcontentsline{toc}{chap}{\protect\numberline{\hbox{ }\hfill\bf\thechapter.\hspace{5pt}}{\bf #1}}
+  % Sin punto explicito: babel espanol ya agrega el punto al numero (si pusiera
+  % "\thechapter." quedaria doble punto "I.." en la compilacion en espanol).
+  \addcontentsline{toc}{chapter}{\protect\numberline{\textbf{\thechapter}}{\textbf{#1}}}
   \addtocontents{toc}{\hbox{ }}
  \else
   \addtocontents{toc}{\hbox{ }}
   \addcontentsline{toc}{chap}{#1}
   \addtocontents{toc}{\hbox{ }}
  \fi
+ \chaptermark{#1}%
  \if@twocolumn \@topnewpage[\@makechapterhead{#2}]
- \else \@makechapterhead{#2} \@afterheading \fi
+ % Sin \@afterheading: asi la PRIMERA seccion del capitulo recibe su espacio
+ % previo aunque el capitulo arranque directo con \section (sin parrafo intro).
+ \else \@makechapterhead{#2} \fi
 }
 
 \def\@makechapterhead#1{%
@@ -339,7 +344,7 @@
  \twoinmar
  {\parindent 0pt \raggedright
   \ifnum \c@secnumdepth >\m@ne
-  \centerline{\large\bf \@chapapp{} \thechapter} \par
+  \centerline{\large\bf \textcolor{unslazul}{\@chapapp{} \thechapter}} \par
   \vskip 0.3in \fi
   \begin{center}
    \Large\bf #1
@@ -349,12 +354,13 @@
  \@afterindenttrue
 }
 
-\def\section{\@startsection{section}{1}{\z@}{3.5ex plus 1ex minus
- .2ex}{2.3ex plus .2ex}{\large\bf}}
-\def\subsection{\@startsection{subsection}{2}{\z@}{3.25ex plus 1ex minus
- .2ex}{1.5ex plus .2ex}{\normalsize\bf}}
-\def\subsubsection{\@startsection{subsubsection}{3}{\z@}{3.25ex plus
- 1ex minus .2ex}{1.5ex plus .2ex}{\normalsize\bf}}
+% beforeskip aumentado (mas aire antes de los titulos, va mejor con doble espacio)
+\def\section{\@startsection{section}{1}{\z@}{6ex plus 1.2ex minus
+ .5ex}{2.5ex plus .2ex}{\large\bf}}
+\def\subsection{\@startsection{subsection}{2}{\z@}{5ex plus 1ex minus
+ .4ex}{1.6ex plus .2ex}{\normalsize\bf}}
+\def\subsubsection{\@startsection{subsubsection}{3}{\z@}{4.5ex plus
+ 1ex minus .4ex}{1.5ex plus .2ex}{\normalsize\bf}}
 
 \long\def\@caption#1[#2]#3{%
  \addtocontents{\csname ext@#1\endcsname}{\hbox{ }}
@@ -392,17 +398,17 @@
 
  \setcounter{chapter}{0}
  \setcounter{section}{0}
- \def\@chapapp{AP\'ENDICE}
- \pagestyle{plain}
+ \def\@chapapp{Ap\'endice}
+ \pagestyle{fancy}
  \clearpage
  \hbox{}
  \if@twoside \ifodd\c@page \else\thispagestyle{empty} \clearpage\hbox{}\fi\fi
  \thispagestyle{chappage}
- \addcontentsline{toc}{chapter}{AP\'ENDICE}
+ \addcontentsline{toc}{chapter}{Ap\'endice}
  \hbox{ }
  \vertadjust
  \vfill
- \centerline{\large\bf AP\'ENDICES} % The half title page
+ \centerline{\large\bf Ap\'endices} % The half title page
  \vfill
 }
 
@@ -435,18 +441,16 @@
  \vspace{0.75in}
 }
 
-\def\startbibliography{% This sets things up for BibTeX
+\def\startbibliography{% Encabezado de bibliografia con ESTILO DE CAPITULO
  \clearpage
- \hbox{}
- \if@twoside \ifodd\c@page \else\thispagestyle{empty} \clearpage\hbox{} \fi\fi
- \thispagestyle{chappage}
- \addcontentsline{toc}{chapter}{BIBLIOGRAF\'IA}
- \hbox{ }
- \vertadjust
- \vfill
- \centerline{\large\bf BIBLIOGRAF\'IA} % The half title page
- \vfill
- \renewcommand{\bibname}{\vspace{-.13in}\centerline{\large\bf BIBLIOGRAF\'IA}}
+ \renewcommand{\bibname}{Bibliograf\'ia}%
+ \phantomsection                         % ancla correcta para hyperref
+ \addcontentsline{toc}{chapter}{\bibname}% aparece en el indice como capitulo
+ \markboth{\bibname}{\bibname}%           % running header "Bibliografia"
+ \thispagestyle{plain}%                   % primera pagina sin encabezado (como un cap.)
+ \hbox{}\twoinmar
+ \begin{center}\Large\bfseries \bibname\end{center}
+ \nobreak\vskip 0.5in
 }
 
 \def\thebibliography#1{% If using BibTeX, this code is ignored
@@ -477,7 +481,7 @@
  \ttlpg
  \@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
  \hbox{ }
- \centerline{\large\bf ABSTRACT}
+ \centerline{\large\bf Abstract}
  \vspace{0.25in}
  \begin{center}
   \begin{singlespace}
