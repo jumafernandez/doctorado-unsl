@@ -22,6 +22,12 @@
 }
 \newcommand{\code}[1]{\mintinline{text}{#1}}   % codigo corto en linea
 
+% ---- Interlineado: doble espacio (como la tesis de referencia UNSL) ---------
+% rac.sty deja en simple espacio la portada, el indice y la bibliografia
+% (usa entornos singlespace), asi que el doble espacio aplica solo al cuerpo.
+% Para 1,5 lineas en lugar de doble, cambia por \onehalfspacing.
+\doublespacing
+
 % ---- Referencias cruzadas en espanol (cleveref) -----------------------------
 \crefname{figure}{figura}{figuras}
 \Crefname{figure}{Figura}{Figuras}

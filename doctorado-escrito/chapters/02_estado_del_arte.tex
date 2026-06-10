@@ -1,12 +1,413 @@
-%=============================== Estado del arte ==============================
-\todo{Revisión crítica de la literatura relevante. Agrupar por enfoques o
-líneas de trabajo, no por autor.}
+%=========================== Estado del arte ==================================
+% Archivo: chapters/02_estado_del_arte.tex
+%
+% Importante:
+% No incluir \chapter ni \label aquí, porque ya están definidos en thesis.tex:
+% \chapter{Estado del arte}\label{cap:estado-del-arte}
+%
+% Este capítulo revisa antecedentes conceptuales y técnicos. El marco teórico
+% formal queda reservado para el Capítulo 3.
 
-\section{Trabajos relacionados}
-A modo de ejemplo, \citet{ejemplo2023} propusieron un enfoque basado en X,
-mientras que otros trabajos abordan el problema desde Y \citep{ejemplo2024}.
-\todo{Reemplazar por las referencias reales (cargarlas en \texttt{references.bib}).}
+El presente capítulo revisa los principales antecedentes conceptuales y técnicos sobre
+los que se apoya esta tesis. En primer lugar, se introducen las principales tradiciones
+de la \ac{IA}, con especial atención a la relación entre enfoques simbólicos y
+subsimbólicos. Luego, se presentan los enfoques neuro-simbólicos como una línea de
+integración entre aprendizaje distribuido, representación explícita y razonamiento
+estructurado. A continuación, se revisa el desarrollo de los modelos de lenguaje de
+gran escala y su impacto en el diseño de sistemas conversacionales. Finalmente, se
+analiza la evolución de los sistemas de diálogo orientado a tareas, las limitaciones de
+los enfoques basados exclusivamente en \ac{LLM}, y la necesidad de incorporar
+estructuras simbólicas inducidas desde datos conversacionales para favorecer agentes
+más consistentes, explicables y robustos.
 
-\section{Síntesis y brechas}
-\todo{Resumir el estado del arte e identificar explícitamente las brechas que
-esta tesis aborda.}
+\section{Inteligencia artificial, representación y aprendizaje}
+
+La \ac{IA} puede entenderse, en una de sus definiciones fundacionales, como la ciencia
+de hacer que las máquinas realicen tareas que, de ser realizadas por personas, serían
+consideradas inteligentes \citep{minsky1961steps}. Aunque formulada en los inicios
+de la disciplina, esta definición conserva vigencia porque expresa de manera sintética
+uno de sus propósitos centrales: modelar, reproducir o asistir capacidades cognitivas
+humanas mediante sistemas computacionales.
+
+En una formulación más reciente, \citet{russell2020artificial} conciben la \ac{IA}
+como el estudio de agentes capaces de percibir su entorno y actuar sobre él con el
+propósito de alcanzar objetivos. Esta caracterización resulta particularmente adecuada
+para el presente trabajo, dado que un sistema de diálogo orientado a tareas puede
+entenderse como un agente que percibe intervenciones lingüísticas del usuario,
+mantiene algún tipo de estado interno, selecciona acciones conversacionales y actúa
+mediante respuestas en lenguaje natural o mediante la ejecución de herramientas
+externas.
+
+Desde esta perspectiva, el diseño de sistemas inteligentes requiere articular varios
+componentes. El \ac{PLN} permite la comunicación mediante lenguaje humano; la
+representación del conocimiento permite almacenar hechos, relaciones y restricciones;
+el razonamiento automático permite derivar conclusiones a partir de lo conocido; y el
+aprendizaje automático permite detectar patrones y adaptar el comportamiento del
+sistema a partir de la experiencia. En esta articulación, el aprendizaje ocupa un lugar
+central, pero no agota por sí mismo el problema de la inteligencia. Los agentes deben
+también representar, decidir, actuar y justificar, especialmente cuando operan en
+dominios donde la consistencia y la trazabilidad son relevantes.
+
+A lo largo de la historia de la \ac{IA}, las estrategias para abordar estos problemas se
+han organizado, de manera esquemática, en dos grandes tradiciones: la simbólica y la
+subsimbólica o conexionista. La primera se apoya en la representación explícita de
+conocimiento, reglas, conceptos y relaciones. La segunda se basa en representaciones
+distribuidas aprendidas desde datos, típicamente mediante modelos estadísticos o redes
+neuronales. Esta distinción no debe entenderse como una oposición absoluta, sino como
+dos énfasis diferentes en torno a un mismo problema: cómo construir sistemas capaces
+de interpretar información, generalizar y tomar decisiones.
+
+\section{Enfoques simbólicos en inteligencia artificial}
+
+Los enfoques simbólicos ocuparon un lugar central en los primeros desarrollos de la
+\ac{IA}. En este paradigma, el conocimiento se representa de manera explícita mediante
+símbolos manipulables, reglas, árboles, programas lógicos, casos o estructuras formales.
+Entre los antecedentes más representativos se encuentran los algoritmos de inducción
+de reglas \citep{michalski1969quasi,quinlan1986induction}, los árboles de decisión
+\citep{quinlan1993c45}, la programación lógica inductiva \citep{muggleton1995inverse},
+el aprendizaje basado en explicación \citep{mitchell1986explanation} y el razonamiento
+basado en casos \citep{kolodner1993case}.
+
+La principal fortaleza de estos enfoques radica en su explicabilidad. Una regla, un árbol
+de decisión o un programa lógico permiten inspeccionar de manera relativamente directa
+el mecanismo por el cual el sistema llega a una conclusión. Esto resulta especialmente
+atractivo en dominios donde la decisión computacional debe ser interpretada,
+auditada o justificada por un experto humano. En el caso de los sistemas de diálogo,
+las representaciones simbólicas permiten describir de manera explícita estados,
+acciones, restricciones, transiciones y políticas de interacción.
+
+Sin embargo, los enfoques simbólicos clásicos presentan también limitaciones
+importantes. En general, dependen de representaciones diseñadas manualmente, lo que
+vuelve costosa su adaptación a nuevos dominios. Además, suelen tener dificultades
+para manejar ruido, ambigüedad, variabilidad lingüística y grandes volúmenes de datos.
+Estas limitaciones son especialmente visibles en problemas de lenguaje natural, donde
+los significados son contextuales, las formas de expresión son variables y las fronteras
+entre intenciones pueden ser difusas.
+
+En sistemas de diálogo orientado a tareas, los enfoques simbólicos tradicionales se
+expresaron en arquitecturas basadas en estados, reglas y políticas explícitas. Este tipo
+de modelado facilita el control del flujo conversacional, pero suele requerir un esfuerzo
+elevado de ingeniería de dominio. La definición manual de intenciones, entidades,
+acciones y transiciones puede ser viable en dominios acotados, pero se vuelve difícil de
+escalar cuando se busca cubrir interacciones más abiertas, dominios cambiantes o datos
+conversacionales heterogéneos.
+
+\section{Aprendizaje subsimbólico y representaciones distribuidas}
+
+A diferencia del enfoque simbólico, el aprendizaje subsimbólico se apoya en
+representaciones distribuidas. En lugar de manipular reglas explícitas, estos modelos
+aprenden patrones a partir de datos y codifican la información en vectores, pesos,
+activaciones o espacios latentes. Las redes neuronales artificiales constituyen el ejemplo
+más representativo de esta tradición \citep{rumelhart1986learning}.
+
+La fortaleza principal de los enfoques subsimbólicos reside en su capacidad para
+aprender representaciones complejas desde grandes volúmenes de datos. Esta capacidad
+permitió avances significativos en visión por computadora, reconocimiento de voz,
+traducción automática, recuperación de información y procesamiento del lenguaje
+natural. En particular, en \ac{PLN}, las representaciones distribuidas permitieron superar
+parcialmente las limitaciones de las representaciones léxicas puramente discretas,
+habilitando modelos capaces de capturar similitudes semánticas, regularidades
+contextuales y relaciones latentes entre unidades lingüísticas.
+
+El desarrollo de embeddings de palabras, oraciones y documentos consolidó un cambio
+importante en el procesamiento del lenguaje. Las palabras dejaron de ser representadas
+únicamente como identificadores discretos o posiciones en un vocabulario y pasaron a
+ser codificadas como vectores en espacios continuos. En dichos espacios, la cercanía
+geométrica puede reflejar algún tipo de proximidad semántica, sintáctica o funcional.
+Este principio resulta relevante para la presente tesis porque los flujos conversacionales
+pueden analizarse también a partir de representaciones vectoriales de turnos, estados
+o fragmentos de diálogo.
+
+No obstante, los enfoques subsimbólicos presentan una limitación simétrica a la de los
+enfoques simbólicos. Si bien son poderosos para aprender desde datos, sus mecanismos
+internos suelen ser difíciles de interpretar. En muchos casos, la representación aprendida
+no ofrece una explicación directa de la decisión tomada. En sistemas conversacionales,
+esto plantea un problema relevante: un agente puede producir una respuesta fluida y
+aparentemente adecuada, pero sin que resulte claro por qué la produjo, qué estado de
+la tarea asumió, qué acción intentó ejecutar o qué restricciones consideró.
+
+\section{Enfoques neuro-simbólicos}
+
+A partir de los años noventa comenzó a consolidarse la idea de que lo simbólico y lo
+conexionista no debían entenderse como tradiciones excluyentes, sino como enfoques
+complementarios. El campo conocido como \ac{IA} neuro-simbólica busca integrar la
+capacidad de aprendizaje y generalización de los modelos neuronales con la capacidad
+de representación, razonamiento y control de los métodos simbólicos
+\citep{garcez2002neural,besold2017neural,garcez2019neural,garcez2020neuro}.
+
+En términos generales, los enfoques neuro-simbólicos intentan resolver una tensión
+central de la \ac{IA}: los modelos neuronales aprenden representaciones potentes, pero
+opacas; los modelos simbólicos son interpretables, pero rígidos y dependientes de
+representaciones manuales. La integración de ambos enfoques busca combinar lo mejor
+de cada tradición: percepción y aprendizaje desde datos por un lado, estructura,
+consistencia y verificabilidad por el otro.
+
+Esta integración puede adoptar diferentes formas. En algunos casos, el conocimiento
+simbólico se utiliza para restringir o regular el aprendizaje neuronal. En otros, los
+modelos neuronales se emplean para inducir estructuras simbólicas desde datos. También
+existen arquitecturas en las que un componente neuronal actúa como mecanismo de
+percepción o generación, mientras que un componente simbólico controla la toma de
+decisiones, valida salidas o representa restricciones del dominio.
+
+Para esta tesis, el interés principal se ubica en esta última familia de enfoques. En
+particular, se busca estudiar cómo un \ac{LLM} puede integrarse con estructuras simbólicas
+derivadas de conversaciones reales. La hipótesis subyacente es que el modelo de lenguaje
+puede aportar flexibilidad interpretativa y capacidad generativa, mientras que la
+estructura simbólica puede aportar control de flujo, consistencia, explicabilidad y
+mecanismos explícitos de validación.
+
+\section{Modelos de lenguaje de gran escala}
+
+La aparición de las arquitecturas basadas en Transformers constituyó un punto de
+inflexión en el desarrollo reciente del \ac{PLN} \citep{vaswani2017attention}. El
+mecanismo de atención permitió modelar dependencias contextuales de manera más
+efectiva que las arquitecturas secuenciales tradicionales, facilitando el entrenamiento
+de modelos de gran escala sobre corpus extensos. A partir de este avance, se desarrolló
+una familia de modelos preentrenados que transformó gran parte de las tareas de
+procesamiento del lenguaje natural.
+
+En particular, los modelos autorregresivos basados en arquitecturas \emph{decoder-only}
+permitieron avanzar en la generación fluida de texto y en la adaptación a tareas mediante
+instrucciones, ejemplos o prompts \citep{radford2019language,brown2020language}.
+Modelos como GPT, LLaMA o Mistral evidenciaron capacidades notables para producir
+texto coherente, responder preguntas, resumir documentos, traducir, generar código y
+seguir instrucciones en lenguaje natural \citep{touvron2023llama}. Estas capacidades
+impulsaron su adopción como componentes centrales en asistentes conversacionales y
+agentes basados en lenguaje.
+
+Además de la generación textual, los \ac{LLM} mostraron cierto potencial para realizar
+razonamientos de varios pasos mediante técnicas de prompting. Estrategias como
+\emph{Chain-of-Thought} promueven la explicitación de pasos intermedios de
+razonamiento \citep{wei2022chain}, mientras que enfoques como \emph{Tree of Thoughts}
+proponen explorar múltiples trayectorias posibles antes de arribar a una respuesta
+\citep{yao2023tree}. De forma complementaria, trabajos como Toolformer exploraron
+la posibilidad de que los modelos aprendan a utilizar herramientas externas como parte
+del proceso de resolución de tareas \citep{schick2023toolformer}.
+
+Sin embargo, estas capacidades no eliminan las limitaciones de fondo. Los \ac{LLM}
+son modelos estadísticos entrenados para predecir continuaciones plausibles de texto,
+no sistemas de razonamiento simbólico en sentido estricto. Esto implica que pueden
+producir respuestas convincentes pero incorrectas, omitir restricciones relevantes,
+generar información no sustentada o actuar de manera inconsistente a lo largo de una
+interacción prolongada. En aplicaciones abiertas, estos problemas pueden ser tolerables
+o corregibles; en sistemas orientados a tareas, en cambio, pueden comprometer la
+confiabilidad del agente.
+
+\section{Sistemas de diálogo}
+
+El estudio de los sistemas de diálogo constituye una de las áreas históricas de la
+\ac{IA} aplicada al lenguaje natural. En términos generales, la literatura suele distinguir
+entre sistemas de diálogo de dominio abierto y sistemas de diálogo orientado a tareas.
+Los primeros buscan sostener conversaciones amplias, naturales y flexibles. Los segundos,
+en cambio, tienen como objetivo asistir al usuario en la consecución de una meta
+específica, como consultar información, realizar una reserva, completar una transacción
+o ejecutar una acción en un sistema externo \citep{chen2017survey,gao2019neural,
+williams2013dialog,young2013pomdp}.
+
+Esta distinción es central para la presente tesis. Mientras que en un diálogo de dominio
+abierto la fluidez y la pertinencia local pueden ser criterios suficientes en muchos
+escenarios, en un sistema de diálogo orientado a tareas la interacción debe mantener
+una relación explícita con un objetivo. El agente necesita reconocer intenciones,
+identificar entidades, conservar información relevante, decidir la siguiente acción y
+verificar que sus respuestas sean compatibles con el estado actual de la tarea. Por este
+motivo, los sistemas \ac{TOD} requieren un control más estricto del flujo conversacional.
+
+Históricamente, los \ac{TOD} fueron diseñados mediante arquitecturas modulares. Una
+arquitectura típica incluye un componente de comprensión de lenguaje natural, un
+gestor de estado de diálogo, una política de diálogo y un componente de generación de
+lenguaje natural. Este diseño permite separar responsabilidades y controlar de manera
+explícita el comportamiento del sistema. Sin embargo, también introduce dependencias
+fuertes entre componentes y exige datos anotados para entrenar o ajustar cada módulo.
+
+El modelado formal del diálogo orientado a tareas incluyó enfoques basados en
+máquinas de estados finitos, donde el flujo de interacción se representa mediante
+estados y transiciones explícitas \citep{levin2000stochastic}. Posteriormente, se
+incorporaron formalismos probabilísticos, como los procesos de decisión de Markov
+parcialmente observables, que permiten modelar la incertidumbre sobre el estado real
+del diálogo y optimizar políticas de interacción \citep{young2010hidden,
+williams2007pomdp}. Estos enfoques aportaron un marco riguroso para representar
+decisiones conversacionales, pero también dependen de una formulación precisa del
+dominio y de un trabajo considerable de diseño o anotación.
+
+\section{Diálogos orientados a tareas en la era de los LLM}
+
+La irrupción de los \ac{LLM} modificó de manera significativa el campo de los sistemas
+de diálogo. Dado que estos modelos pueden interpretar instrucciones, mantener
+contexto textual y generar respuestas fluidas, comenzaron a utilizarse como núcleo de
+sistemas conversacionales, incluyendo escenarios orientados a tareas. Esto abrió la
+posibilidad de reducir la dependencia de arquitecturas modulares rígidas y de diseñar
+agentes más flexibles, capaces de operar en dominios menos estructurados.
+
+No obstante, la utilización directa de \ac{LLM} en sistemas \ac{TOD} presenta limitaciones
+relevantes. Diversos trabajos han señalado que estos modelos pueden no satisfacer
+completamente los requerimientos de los diálogos orientados a tareas, especialmente
+cuando deben mantener estado, respetar restricciones, interactuar con herramientas o
+garantizar consistencia a lo largo de múltiples turnos \citep{hudecek2023are,
+qin2023chatgpt,zhang2023todllm}. En este tipo de escenarios, la calidad lingüística de
+la respuesta no es suficiente: el agente debe actuar correctamente dentro de un proceso
+de interacción orientado a objetivos.
+
+Una limitación especialmente importante es la falta de control explícito. Un \ac{LLM}
+puede generar una respuesta plausible pero incompatible con el estado real de la tarea.
+Por ejemplo, puede confirmar una acción que no fue validada, solicitar información ya
+proporcionada, omitir un paso obligatorio o desviarse del flujo esperado. Estos errores
+no son meramente superficiales: afectan la confiabilidad funcional del agente.
+
+Otra limitación es la posibilidad de alucinación. En el contexto de un \ac{TOD}, una
+alucinación no se reduce a inventar un dato factual, sino que puede consistir en producir
+una acción, estado o transición inexistente dentro del dominio. Por ello, los mecanismos
+de control deben ir más allá de la verificación factual y considerar también la coherencia
+estructural del diálogo.
+
+Como respuesta parcial a estas limitaciones, se han propuesto estrategias para
+aumentar las capacidades de los \ac{LLM}. Entre ellas se encuentran la recuperación
+aumentada por generación, que permite incorporar información externa relevante al
+contexto de generación \citep{lewis2020retrieval}; los enfoques de razonamiento paso
+a paso, como \emph{Chain-of-Thought} \citep{wei2022chain}; y los modelos capaces de
+usar herramientas externas \citep{schick2023toolformer}. Estas estrategias mejoran
+distintos aspectos del comportamiento de los modelos, pero no resuelven por completo
+el problema del control estructural del flujo conversacional.
+
+\section{Planificación y procesos de decisión en diálogo}
+
+Los sistemas de diálogo orientado a tareas pueden interpretarse naturalmente como
+problemas de decisión secuencial. En cada turno, el agente observa información parcial
+sobre el usuario y el estado de la tarea, actualiza su representación interna y selecciona
+una acción. Esta acción puede consistir en responder, preguntar, confirmar, consultar
+una base de datos, invocar una herramienta o finalizar la interacción. La calidad del
+sistema depende, por tanto, no sólo de la respuesta local generada, sino también de la
+trayectoria completa de decisiones.
+
+Los procesos de decisión de Markov y sus variantes parcialmente observables ofrecen
+un marco formal para este tipo de problemas. En un \ac{MDP}, el agente opera sobre un
+conjunto de estados, selecciona acciones, observa transiciones y recibe recompensas.
+En un \ac{POMDP}, el agente no observa directamente el estado completo del entorno,
+sino señales parciales o inciertas. Esta formulación resulta adecuada para el diálogo,
+dado que el agente rara vez conoce con certeza la intención del usuario, el estado real
+de sus preferencias o la interpretación correcta de cada intervención.
+
+En la tradición de los sistemas \ac{TOD}, los \ac{POMDP} permitieron modelar la
+incertidumbre propia de la interacción y optimizar políticas de diálogo
+\citep{young2010hidden,williams2007pomdp}. Sin embargo, su aplicación suele requerir
+una definición explícita del espacio de estados, las acciones disponibles, las funciones
+de transición y las recompensas. Esto vuelve difícil su aplicación directa en dominios
+amplios o en escenarios donde los estados conversacionales no están anotados de
+manera explícita.
+
+La presente tesis se sitúa precisamente en esa intersección. En lugar de partir
+únicamente de un espacio de estados definido manualmente, propone explorar la
+derivación de estructuras simbólicas desde conversaciones reales. Estas estructuras
+pueden ser luego formalizadas como procesos de decisión, permitiendo razonar sobre
+trayectorias conversacionales, acciones esperadas y políticas de interacción. De este
+modo, la planificación no se incorpora como un componente externo y rígido, sino como
+una formalización posible de regularidades inducidas desde datos.
+
+\section{Grafo conversacional, estados latentes e inducción de estructuras}
+
+Una de las dificultades centrales en sistemas de diálogo orientado a tareas es identificar
+la estructura subyacente de la interacción. En algunos dominios, dicha estructura puede
+ser definida manualmente mediante flujos, formularios o árboles de decisión. Sin
+embargo, en conversaciones reales, los usuarios pueden expresar una misma intención
+de múltiples maneras, alterar el orden esperado de los pasos, introducir información
+incompleta o desviarse temporalmente del objetivo principal. Por este motivo, resulta
+relevante estudiar métodos para inducir estructuras conversacionales desde datos.
+
+Una forma de abordar este problema consiste en representar fragmentos de diálogo,
+turnos o estados conversacionales mediante embeddings, y luego identificar regiones
+latentes asociadas a funciones comunicativas, intenciones o momentos del proceso de
+interacción. A partir de estas regiones, es posible construir grafos de transición que
+representen cómo evolucionan las conversaciones entre distintos estados inducidos.
+Estos grafos pueden entenderse como una representación simbólica aproximada del
+flujo conversacional observado.
+
+Este enfoque ofrece varias ventajas. En primer lugar, reduce la dependencia de
+anotaciones manuales exhaustivas. En segundo lugar, permite capturar regularidades
+emergentes en los datos, incluyendo trayectorias alternativas o patrones no previstos
+por un diseñador. En tercer lugar, habilita una representación interpretable del espacio
+conversacional, ya que los nodos y transiciones pueden ser analizados como regiones y
+movimientos dentro del flujo de la tarea.
+
+En esta línea, trabajos recientes han comenzado a explorar la inducción no supervisada
+de representaciones accionables desde conversaciones, dando lugar a grafos de transición
+más flexibles y adecuados para capturar la variabilidad del lenguaje natural
+\citep{burdisso2024dialog2flow}. Esta perspectiva resulta especialmente relevante para
+la presente tesis, que busca profundizar en el descubrimiento de estructuras simbólicas
+a partir de interacciones reales y en su integración con modelos de lenguaje.
+
+\section{LLM, grafos de conocimiento y estructuras simbólicas}
+
+La integración entre \ac{LLM} y estructuras simbólicas ha recibido creciente atención
+en los últimos años. Una línea particularmente activa es la combinación de modelos de
+lenguaje con grafos de conocimiento. Los grafos de conocimiento permiten representar
+entidades, relaciones y hechos en una estructura explícita, mientras que los \ac{LLM}
+ofrecen capacidades de comprensión y generación en lenguaje natural. Esta integración
+busca mejorar la factualidad, la trazabilidad y el razonamiento de los modelos
+\citep{ji2022survey,pan2024unifying,luo2024reasoning}.
+
+Aunque los grafos conversacionales no son equivalentes a los grafos de conocimiento
+tradicionales, comparten con ellos la idea de representar información en una estructura
+explícita de nodos y relaciones. En el caso de esta tesis, los nodos no representan
+necesariamente entidades del mundo, sino estados, regiones de intención o momentos
+funcionales del diálogo. Las aristas, por su parte, representan transiciones observadas
+o esperadas entre dichos estados. Esta diferencia desplaza el foco desde la representación
+de conocimiento factual hacia la representación de dinámica conversacional.
+
+Esta distinción resulta importante. Un agente conversacional orientado a tareas no sólo
+necesita saber hechos del dominio; también necesita saber en qué momento del proceso
+interactivo se encuentra, qué acciones son razonables a continuación y qué transiciones
+deberían evitarse. Por ello, las estructuras simbólicas relevantes para un \ac{TOD} no
+son únicamente ontologías o bases de conocimiento, sino también modelos explícitos
+del flujo de interacción.
+
+Desde esta perspectiva, los \ac{LLM} pueden cumplir al menos tres funciones dentro de
+un enfoque híbrido. Primero, pueden actuar como mecanismos de interpretación,
+ayudando a mapear intervenciones del usuario a regiones del espacio conversacional.
+Segundo, pueden actuar como generadores, produciendo respuestas lingüísticamente
+adecuadas bajo restricciones simbólicas. Tercero, pueden asistir en la construcción o
+refinamiento de representaciones estructuradas a partir de datos no anotados. A su
+vez, las estructuras simbólicas pueden controlar, validar o explicar el comportamiento
+del modelo.
+
+\section{Limitaciones de los enfoques actuales}
+
+A pesar de los avances recientes, los sistemas conversacionales contemporáneos siguen
+enfrentando limitaciones relevantes. Los enfoques puramente simbólicos ofrecen control
+y trazabilidad, pero son costosos de diseñar y difíciles de adaptar a nuevos dominios.
+Los enfoques puramente neuronales ofrecen flexibilidad y capacidad generativa, pero
+pueden carecer de consistencia, explicabilidad y control explícito. Los sistemas basados
+exclusivamente en \ac{LLM}, aunque potentes, no garantizan por sí mismos una trayectoria
+conversacional válida ni una política de interacción verificable.
+
+Estas limitaciones son especialmente importantes en diálogos orientados a tareas,
+donde el éxito de la interacción depende de la progresión adecuada del proceso. Un
+agente puede producir respuestas localmente correctas y, aun así, fallar globalmente si
+pierde el estado, repite pasos, ignora restricciones o ejecuta acciones fuera de orden.
+Por lo tanto, la evaluación de estos sistemas no debería restringirse a métricas de
+calidad textual o satisfacción local, sino incorporar también criterios de coherencia
+estructural, similitud de trayectorias, robustez y validez de acciones.
+
+En este punto se identifica una brecha relevante. Si bien existen líneas de trabajo sobre
+\ac{LLM} para \ac{TOD}, sobre planificación, sobre razonamiento neuro-simbólico y sobre
+grafos de conocimiento, todavía resulta necesario profundizar en enfoques que induzcan
+estructuras simbólicas desde conversaciones reales y las utilicen como mecanismos de
+control para modelos de lenguaje. Esta tesis se propone avanzar en esa dirección.
+
+\section{Síntesis del capítulo}
+
+Este capítulo revisó los antecedentes principales que motivan el enfoque propuesto en
+esta tesis. En primer lugar, se presentó la tensión histórica entre enfoques simbólicos
+y subsimbólicos en \ac{IA}. Luego, se analizaron los enfoques neuro-simbólicos como
+una estrategia para integrar aprendizaje, representación explícita y razonamiento. A
+continuación, se discutió el impacto de los \ac{LLM} en el procesamiento del lenguaje y
+en los sistemas conversacionales. Posteriormente, se revisó la especificidad de los
+diálogos orientados a tareas, destacando la importancia del control de flujo, el estado
+conversacional y la toma de decisiones secuencial.
+
+A partir de esta revisión, se observa que los sistemas \ac{TOD} contemporáneos se
+encuentran ante una tensión central: necesitan aprovechar la flexibilidad de los \ac{LLM},
+pero también requieren mecanismos explícitos de control, validación y explicación.
+Los grafos conversacionales inducidos desde datos reales ofrecen una posible vía para
+resolver esta tensión, al permitir representar regularidades del flujo de diálogo y
+formalizarlas como estructuras simbólicas o procesos de decisión. Sobre esta base, los
+siguientes capítulos desarrollan el marco teórico, la metodología y la evaluación
+experimental del enfoque híbrido propuesto.

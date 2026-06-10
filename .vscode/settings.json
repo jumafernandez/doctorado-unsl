@@ -30,6 +30,11 @@
     { "name": "latexmk", "tools": ["latexmk"] }
   ],
 
+  // Tu config global de usuario define "latex-workshop.latex.recipe.default":
+  // "latexmk (pdfLaTeX)", pero esa receta no existe en la lista de arriba
+  // (que es propia de este proyecto). La pisamos para que use "latexmk".
+  "latex-workshop.latex.recipe.default": "latexmk",
+
   // Construir al guardar (opcional; comenta esta linea si preferis solo el boton play)
-  "latex-workshop.latex.autoBuild.run": "onSave"
+  "latex-workshop.latex.autoBuild.run": "never"
 }

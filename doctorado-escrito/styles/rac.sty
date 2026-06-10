@@ -69,7 +69,8 @@
   \vfill
   por \\
   \vspace{2ex} % ex is the height of the lowercase 'x' for the current font. -jg
-  #2 \\
+  % sin \\ final: el salto antes de \vfill dejaba una linea vacia (Underfull \hbox)
+  #2
   \vfill
   Tesis de #3\\
   #4\\
@@ -162,7 +163,8 @@
  \endgroup
 }
 
-\def\l@chap{\@dottedtocline{1}{0.5em}{3.5em}}
+% 3.8em (antes 3.5em): "VIII." + 5pt no entraba y daba Overfull \hbox en el indice.
+\def\l@chap{\@dottedtocline{1}{0.5em}{3.8em}}
 \def\l@section{\@dottedtocline{2}{5.0em}{2.3em}}
 \def\l@subsection{\@dottedtocline{3}{8.3em}{3.2em}}
 \def\l@subsubsection{\@dottedtocline{4}{12.5em}{4.1em}}
@@ -199,7 +201,9 @@
  \vspace{0.7in}
  \begin{singlespace}
   \@starttoc{lof}\if@restonecol\twocolumn\fi
-  \addtocontents{lof}{\noindent\underline{\bf Figura}\hfill\rm\protect\newline}
+  % \par en lugar de \hfill\newline: el \newline dejaba una linea vacia que
+  % generaba un warning "Underfull \hbox (badness 10000)" en cada compilacion.
+  \addtocontents{lof}{\noindent\underline{\bf Figura}\protect\par}
  \end{singlespace}
 }
 
@@ -213,7 +217,8 @@
  \vspace{0.7in}
  \begin{singlespace}
   \@starttoc{lot}\if@restonecol\twocolumn\fi
-  \addtocontents{lot}{\noindent\underline{\bf Tabla}\hfill\rm\protect\newline}
+  % \par en lugar de \hfill\newline (ver \listoffigures).
+  \addtocontents{lot}{\noindent\underline{\bf Tabla}\protect\par}
  \end{singlespace}
 }
 

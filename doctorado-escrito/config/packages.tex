@@ -20,9 +20,15 @@
 % es-tabla: los flotantes dicen "Tabla"; es-noindentfirst: sin sangria inicial.
 
 % ---- Fuentes ----------------------------------------------------------------
-\usepackage{lmodern}             % Latin Modern (buena cobertura T1)
+% Tipografia: Computer Modern (la que usa la tesis de referencia de la UNSL).
+% A proposito NO se carga lmodern, para que la fuente coincida con la del
+% director (con T1 + cm-super salen las mismas SFRM*; en TeX Live completo y
+% Overleaf ya estan). Si alguna vez quisieras la version moderna, agrega:
+%   \usepackage{lmodern}
 \usepackage{courier}             % monoespaciada para codigo en linea
-\usepackage{microtype}           % microtipografia: justificado mas prolijo
+% microtype: protrusion (mejora margenes). expansion=false para no depender de
+% fuentes escalables (cm-super) al usar Computer Modern -> compila en todos lados.
+\usepackage[expansion=false]{microtype}
 
 % ---- Matematica -------------------------------------------------------------
 \usepackage{amsmath}
@@ -33,7 +39,7 @@
 \usepackage{mathtools}           % extiende amsmath (\DeclarePairedDelimiter...)
 
 % ---- Color: UN SOLO paquete (xcolor reemplaza por completo a color) ----------
-\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\usepackage[dvipsnames,svgnames,table]{xcolor}
 % 'table' habilita colores de fila/celda; 'dvipsnames'/'svgnames' dan nombres.
 % NO cargar 'color' por separado: ese era el origen de los errores de choque.
 
@@ -41,6 +47,22 @@
 \usepackage{graphicx}
 \graphicspath{{images/}}         % raiz para \includegraphics (mas subcarpetas)
 \usepackage{rotating}            % figuras/tablas apaisadas
+% rac.sty redefine \@makecaption con un formato propio que el paquete caption
+% no reconoce (warning "Unknown document class") y que igualmente pisa con sus
+% defaults. Restauramos la definicion estandar de LaTeX antes de cargarlo para
+% que la reconozca; el resultado visual es el mismo (manda caption).
+\makeatletter
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{#1: #2}%
+  \ifdim \wd\@tempboxa >\hsize
+    #1: #2\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+\makeatother
 \usepackage{subcaption}          % subfiguras (reemplaza al viejo 'subfigure')
 \usepackage[font={small,bf}]{caption}
 \usepackage{booktabs}            % \toprule \midrule \bottomrule
@@ -69,7 +91,9 @@
 % minted requiere compilar con  -shell-escape  y tener Pygments instalado
 % (pip install Pygments). En Overleaf funciona sin configuracion extra.
 % Alternativa sin dependencias: comentar esta linea y usar 'listings'.
-\usepackage[outputdir=build]{minted}
+% La opcion outputdir ya no es necesaria (ni valida) con minted v3+ / TeX Live 2024+:
+% el directorio de salida se detecta automaticamente.
+\usepackage{minted}
 
 % ---- Bibliografia -----------------------------------------------------------
 \usepackage{natbib}              % citas \citep / \citet (estilo en thesis.tex)

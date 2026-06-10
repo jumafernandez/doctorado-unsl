@@ -1,36 +1,215 @@
 %=============================== Introducción =================================
-% Estructura sugerida: contexto y motivación, planteo del problema, objetivos,
-% contribuciones y organización del documento.
+% Estructura sugerida: contexto y motivación, planteo del problema, preguntas
+% de investigación, objetivos, contribuciones y organización del documento.
 
-La \ac{IA} y, en particular, el \ac{PLN} han transformado la manera en que
-se procesa la información textual. \todo{Contextualizar el área de la tesis.}
+La \ac{IA} ha atravesado, desde sus formulaciones fundacionales hasta sus desarrollos
+contemporáneos, distintas etapas caracterizadas por modos alternativos de representar,
+aprender y razonar sobre el mundo. En una de sus definiciones clásicas, la disciplina
+fue entendida como el estudio de mecanismos capaces de realizar tareas que, si fueran
+realizadas por personas, serían consideradas inteligentes \citep{minsky1961steps}.
+En formulaciones más recientes, la \ac{IA} puede concebirse como el estudio y diseño
+de agentes capaces de percibir su entorno y actuar sobre él con el propósito de alcanzar
+objetivos \citep{russell2020artificial}. Esta perspectiva resulta particularmente
+relevante para el presente trabajo, dado que los sistemas de diálogo orientado a tareas
+pueden entenderse, precisamente, como agentes que interactúan con usuarios mediante
+lenguaje natural para asistirlos en la consecución de una meta específica.
+
+En las últimas décadas, el \ac{PLN} ha experimentado una transformación profunda a
+partir del desarrollo de representaciones distribuidas, arquitecturas neuronales profundas
+y, más recientemente, modelos de lenguaje de gran escala. La aparición de las
+arquitecturas basadas en Transformers \citep{vaswani2017attention} y el posterior
+desarrollo de los \ac{LLM} \citep{brown2020language,touvron2023llama} permitieron
+alcanzar niveles inéditos de fluidez, generalización y adaptabilidad en tareas de
+comprensión y generación de lenguaje natural. Estos modelos han modificado
+sustancialmente el diseño de sistemas conversacionales, ya que ofrecen una capacidad
+generativa amplia, flexible y sensible al contexto.
+
+Sin embargo, esta flexibilidad también introduce desafíos relevantes cuando los modelos
+se utilizan en escenarios orientados a tareas. A diferencia de los diálogos de dominio
+abierto, cuyo objetivo principal es sostener una conversación natural, los sistemas de
+diálogo orientado a tareas requieren mantener control sobre el estado de la interacción,
+la progresión del flujo conversacional y las acciones disponibles en cada momento
+\citep{young2013pomdp,gao2019neural}. En estos sistemas, la respuesta del agente no
+sólo debe ser lingüísticamente adecuada, sino también consistente con la tarea, verificable
+respecto del estado del diálogo y alineada con las restricciones del dominio.
+
+Esta tensión entre capacidad generativa y control estructural motiva el interés por
+arquitecturas híbridas. Por un lado, los \ac{LLM} ofrecen una gran capacidad para
+interpretar y producir lenguaje natural. Por otro lado, las representaciones simbólicas
+permiten modelar restricciones, estados, acciones, transiciones y criterios de validez
+de manera explícita. En este contexto, los enfoques neuro-simbólicos buscan integrar
+la flexibilidad del aprendizaje neuronal con la capacidad de representación, control y
+razonamiento de los métodos simbólicos \citep{garcez2019neural,garcez2020neuro}.
+Esta tesis se inscribe en esa línea general, con foco en sistemas de diálogo orientado
+a tareas.
 
 \section{Motivación y planteo del problema}
-\todo{Describir el problema de investigación y por qué es relevante. Plantear
-la brecha (gap) que la tesis viene a cubrir.}
+
+Los sistemas de diálogo orientado a tareas, conocidos en la literatura como \ac{TOD},
+tienen como propósito asistir a un usuario en la resolución de una meta concreta. Para
+ello, el agente debe interpretar las intervenciones del usuario, mantener una representación
+del estado de la conversación, decidir la siguiente acción y producir una respuesta
+adecuada. Tradicionalmente, estos sistemas fueron modelados mediante componentes
+explícitos, tales como identificadores de intención, extractores de entidades, gestores
+de estado y políticas de diálogo. Estos enfoques ofrecían control y trazabilidad, pero
+también requerían una importante inversión en diseño manual, anotación de datos y
+adaptación específica al dominio.
+
+La irrupción de los \ac{LLM} abrió la posibilidad de construir agentes conversacionales
+más flexibles, capaces de operar con instrucciones en lenguaje natural, adaptar sus
+respuestas a distintos contextos y generalizar a dominios no previstos explícitamente.
+No obstante, cuando estos modelos se utilizan como núcleo de sistemas \ac{TOD}, surgen
+limitaciones importantes: pueden producir respuestas inconsistentes, desviarse del
+objetivo de la tarea, inventar información, omitir restricciones del dominio o ejecutar
+acciones no válidas dentro del flujo conversacional \citep{hudecek2023are,qin2023chatgpt}.
+Estas limitaciones son especialmente problemáticas en aplicaciones donde el agente debe
+mantener una interacción verificable, robusta y orientada a objetivos.
+
+Una línea posible para abordar este problema consiste en complementar los \ac{LLM}
+con estructuras simbólicas que actúen como mecanismos de control, validación y
+planificación. En particular, los flujos conversacionales pueden ser representados como
+grafos de transición entre estados latentes o regiones de intención, inducidos a partir
+de conversaciones reales. Dichos grafos pueden aportar una estructura explícita sobre
+la cual razonar acerca de la progresión del diálogo, las acciones esperadas y la coherencia
+de las respuestas generadas. A su vez, estas estructuras pueden formalizarse como
+procesos de decisión, permitiendo analizar políticas de interacción y evaluar trayectorias
+conversacionales desde una perspectiva más controlada.
+
+El problema de investigación que aborda esta tesis puede sintetizarse del siguiente
+modo: los \ac{LLM} poseen una gran capacidad para generar lenguaje natural, pero carecen,
+por sí solos, de mecanismos suficientemente explícitos para garantizar coherencia
+estructural, control de flujo, explicabilidad y robustez en sistemas de diálogo orientado
+a tareas. Frente a esto, se propone explorar un enfoque híbrido que integre modelos de
+lenguaje con estructuras simbólicas inducidas desde conversaciones reales, con el objetivo
+de diseñar agentes conversacionales más consistentes, verificables y explicables.
+
+\section{Preguntas de investigación}
+
+A partir del problema planteado, esta tesis se orienta a responder las siguientes
+preguntas de investigación:
+
+\begin{itemize}
+\item \textbf{P1:} ¿Cómo pueden derivarse representaciones simbólicas de flujos
+conversacionales a partir de datos de diálogo no anotados o débilmente estructurados?
+
+\item \textbf{P2:} ¿De qué manera pueden formalizarse dichas representaciones como
+procesos de decisión que permitan modelar estados, acciones, transiciones y políticas
+de interacción?
+
+\item \textbf{P3:} ¿Cómo puede integrarse un \ac{LLM} con una estructura simbólica
+inducida, de modo que la generación de respuestas quede guiada, restringida o
+validada por el flujo conversacional esperado?
+
+\item \textbf{P4:} ¿Qué métricas permiten evaluar la coherencia estructural, la similitud
+entre diálogos y la robustez de agentes híbridos en escenarios de diálogo orientado
+a tareas?
+\end{itemize}
 
 \section{Objetivos}
+
 \subsection{Objetivo general}
-\todo{Enunciar el objetivo general en una o dos oraciones.}
+
+Explorar, diseñar y evaluar un enfoque híbrido para sistemas de diálogo orientado a
+tareas, integrando modelos de lenguaje de gran escala con estructuras simbólicas
+derivadas de conversaciones reales, con el fin de favorecer agentes conversacionales
+más consistentes, explicables, robustos y controlables.
 
 \subsection{Objetivos específicos}
+
 \begin{itemize}
-  \item \todo{Objetivo específico 1.}
-  \item \todo{Objetivo específico 2.}
-  \item \todo{Objetivo específico 3.}
+\item Derivar representaciones simbólicas de flujos de diálogo a partir de datos
+conversacionales, identificando regiones latentes de intención y construyendo grafos
+de transición entre ellas.
+
+\item Formalizar los grafos conversacionales inducidos como procesos de decisión,
+definiendo estados, acciones, transiciones y posibles funciones de recompensa para
+razonar sobre políticas de interacción.
+
+\item Diseñar mecanismos de integración entre modelos de lenguaje y estructuras
+simbólicas, de modo que la generación de respuestas pueda ser guiada, restringida
+o validada por el grafo conversacional inducido.
+
+\item Definir métricas de similitud, coherencia estructural y robustez para comparar
+diálogos, trayectorias conversacionales y comportamientos de agentes híbridos frente
+a sistemas basados exclusivamente en modelos de lenguaje.
+
+\item Evaluar experimentalmente el enfoque propuesto sobre conjuntos de datos de
+diálogo orientado a tareas, considerando tanto aspectos de desempeño funcional como
+criterios de explicabilidad, consistencia y control.
 \end{itemize}
 
 \section{Contribuciones}
-Las principales contribuciones de esta tesis son:
+
+Las principales contribuciones esperadas de esta tesis son:
+
 \begin{enumerate}
-  \item \todo{Contribución 1.}
-  \item \todo{Contribución 2.}
+\item Un marco metodológico para inducir estructuras simbólicas desde conversaciones
+reales en sistemas de diálogo orientado a tareas, mediante la identificación de regiones
+de intención y la construcción de grafos de transición.
+
+\item Una formalización de los flujos conversacionales inducidos como procesos de
+decisión, que permita razonar sobre estados, acciones, transiciones y políticas de
+interacción en agentes conversacionales.
+
+\item Una arquitectura híbrida neuro-simbólica para integrar modelos de lenguaje
+con grafos conversacionales inducidos, orientada a mejorar la consistencia, el control
+y la explicabilidad de los agentes \ac{TOD}.
+
+\item Un conjunto de métricas para evaluar similitud entre diálogos, coherencia
+estructural y robustez de trayectorias conversacionales a partir de las estructuras
+simbólicas inducidas.
+
+\item Una evaluación experimental comparativa entre agentes basados exclusivamente
+en \ac{LLM} y agentes híbridos guiados por estructuras simbólicas, analizando ventajas,
+limitaciones y condiciones de aplicabilidad del enfoque propuesto.
 \end{enumerate}
 
+\section{Descripción del trabajo propuesto y relevancia científica}
+
+El trabajo propuesto parte de la hipótesis de que los sistemas de diálogo orientado a
+tareas pueden beneficiarse de una integración explícita entre modelos neuronales de
+lenguaje y representaciones simbólicas del flujo conversacional. En lugar de delegar
+por completo la interacción al comportamiento generativo de un \ac{LLM}, esta tesis
+propone estudiar mecanismos mediante los cuales el modelo pueda operar bajo la guía
+de una estructura inducida desde datos conversacionales.
+
+El enfoque se desarrollará en etapas articuladas. En primer lugar, se estudiarán métodos
+para derivar estructuras simbólicas a partir de conversaciones reales, prestando especial
+atención a la identificación de regiones de intención y a la construcción de grafos de
+transición. En segundo lugar, se analizará cómo formalizar dichas estructuras como
+procesos de decisión, de modo que sea posible razonar sobre la progresión de la
+interacción. En tercer lugar, se explorarán mecanismos de integración con modelos de
+lenguaje, considerando estrategias de control, restricción y validación de respuestas.
+Finalmente, se diseñarán métricas y experimentos para evaluar la coherencia estructural
+de los diálogos generados, la similitud entre trayectorias conversacionales y la robustez
+del agente frente a variaciones en la interacción.
+
+La relevancia científica del trabajo radica en abordar una limitación central de los
+sistemas conversacionales contemporáneos: la dificultad de combinar fluidez lingüística
+con control estructural. Si bien los \ac{LLM} han ampliado notablemente las capacidades
+de los agentes conversacionales, su utilización directa en escenarios orientados a tareas
+puede resultar insuficiente cuando se requiere consistencia, verificabilidad y trazabilidad
+del comportamiento. En este sentido, el enfoque propuesto busca aportar evidencia,
+modelos y herramientas para avanzar hacia agentes conversacionales híbridos que no
+sólo generen respuestas plausibles, sino que también actúen de acuerdo con una estructura
+de diálogo explícita y evaluable.
+
 \section{Organización de la tesis}
-El resto del documento se organiza como sigue. El \cref{cap:estado-del-arte}
-revisa los antecedentes; el \cref{cap:marco-teorico} presenta el marco teórico;
-el \cref{cap:metodologia} describe la metodología; los
-\cref{cap:experimentos,cap:resultados} detallan los experimentos y sus
-resultados; el \cref{cap:discusion} los discute; y el \cref{cap:conclusiones}
-cierra con las conclusiones y el trabajo futuro.
+
+El resto del documento se organiza de la siguiente manera. El
+\cref{cap:estado-del-arte} presenta una revisión de los antecedentes vinculados con
+sistemas de diálogo orientado a tareas, modelos de lenguaje, planificación, aprendizaje
+neuro-simbólico e inducción de estructuras conversacionales. El
+\cref{cap:marco-teorico} desarrolla los conceptos teóricos necesarios para fundamentar
+el enfoque propuesto, incluyendo representaciones de diálogo, grafos de transición,
+procesos de decisión y arquitecturas híbridas. El \cref{cap:metodologia} describe la
+metodología general de la investigación, los conjuntos de datos considerados, las
+representaciones utilizadas y el diseño experimental. El \cref{cap:experimentos}
+presenta los experimentos realizados para inducir estructuras conversacionales,
+formalizarlas como procesos de decisión e integrarlas con modelos de lenguaje. El
+\cref{cap:resultados} reporta los resultados obtenidos y compara el comportamiento
+del enfoque propuesto frente a alternativas basadas exclusivamente en modelos de
+lenguaje. El \cref{cap:discusion} analiza los resultados en relación con las preguntas
+de investigación, identifica alcances y limitaciones, y discute las implicancias del enfoque
+híbrido. Finalmente, el \cref{cap:conclusiones} sintetiza las principales conclusiones
+de la tesis y propone líneas de trabajo futuro.
