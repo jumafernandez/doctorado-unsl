@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "contextual-turn-embeddings"
+version = "0.1.0"
+description = "Contextual dialogue-turn embeddings: a trainable 'BERT over dialogue turns'."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Juan Manuel Fernandez" }]
+keywords = ["dialogue", "embeddings", "transformer", "self-supervised", "nlp"]
+
+dependencies = [
+    "torch>=2.0",
+    "numpy",
+    "pandas",
+    "pyyaml",
+    "tqdm",
+    "safetensors",
+]
+
+[project.optional-dependencies]
+# Base encoder (f1) backends — only needed when generating base embeddings.
+encoders = ["transformers>=4.30", "sentence-transformers>=2.2"]
+# Parquet IO and Hugging Face datasets.
+data = ["pyarrow", "datasets"]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["contextual_turn_embeddings*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

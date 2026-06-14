@@ -1,0 +1,19 @@
+# Core dependencies (enough to train/encode with precomputed or mocked embeddings).
+torch>=2.0
+numpy
+pandas
+pyyaml
+tqdm
+safetensors
+pyarrow            # Parquet IO
+
+# Optional — base encoder (f1). Install when generating base embeddings from text:
+#   pip install transformers sentence-transformers
+# transformers>=4.30
+# sentence-transformers>=2.2
+
+# Optional — Hugging Face datasets loading:
+# datasets
+
+# Dev:
+# pytest

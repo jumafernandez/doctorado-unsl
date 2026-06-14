@@ -1,0 +1,65 @@
+# Default configuration for the contextual turn embedding model.
+# Every section maps to a dataclass in contextual_turn_embeddings/config.py.
+
+model:
+  input_dim: 768          # hint; overridden at train time by the base-embedding dim
+  hidden_dim: 768
+  output_dim: 768         # defaults to input_dim (output dim == input dim)
+  num_layers: 4
+  num_heads: 8
+  dropout: 0.1
+  max_turns: 64
+  attention_mode: bidirectional   # "bidirectional" | "autoregressive"
+  use_speaker_embeddings: true
+  num_speakers: 4
+  layer_norm: true
+
+# Loss objectives. With enabled=null the objective follows the attention mode
+# (bidirectional -> masked only; autoregressive -> next-turn). The defaults below
+# are spelled out for the default bidirectional setup: masked reconstruction only.
+# Enabling next_turn_prediction in bidirectional mode is leaky (h_t can attend to
+# t+1) and will emit a warning; turn it on only with attention_mode=autoregressive.
+losses:
+  masked_reconstruction:
+    enabled: true
+    mask_prob: 0.15
+    weight: 1.0
+  next_turn_prediction:
+    enabled: false
+    weight: 1.0
+  lambda_cosine: 1.0
+
+training:
+  seed: 42
+  batch_size: 32
+  epochs: 5
+  learning_rate: 0.0002   # 2e-4 (written in decimal form for safe YAML parsing)
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  gradient_clip_norm: 1.0
+  device: auto            # "auto" | "cpu" | "cuda" | "mps"
+  mixed_precision: false
+  num_workers: 0
+  log_interval: 10
+  output_dir: models/contextual-turn-model
+
+data:
+  path: null              # set to a CSV / Parquet / JSONL file, or pass --data
+  max_turns: 64
+  window: truncate        # "truncate" | "sliding"
+  stride: 32
+  # Column-name overrides (defaults are the canonical names):
+  dialogue_id_col: dialogue_id
+  turn_id_col: turn_id
+  utterance_col: utterance
+  speaker_col: speaker
+  embedding_col: embedding
+  speaker_map: null       # e.g. {user: 0, system: 1, agent: 2}
+
+base_encoder:
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  batch_size: 64
+  normalize: false
+  freeze: true
+  device: auto
+  cache_dir: null
