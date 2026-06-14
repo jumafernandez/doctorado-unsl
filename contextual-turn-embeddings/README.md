@@ -7,7 +7,7 @@ follows earlier work on conversational memory over Dialog2Flow (static vs. norma
 vs. EMA-calibrated turn embeddings), and works with any dataset exposing `dialogue_id`, `turn_id`
 and `utterance` — it is **not** hardcoded to Dialog2Flow.
 
-> 📚 **Documentación completa (en español) en [`docs/`](docs/index.md)** — panorama conceptual,
+> 📚 **Documentación completa (en español) en [`docs/`](docs/README.md)** — panorama conceptual,
 > arquitectura, objetivos, entrenamiento, diagnósticos, configuración, referencia de API y notas
 > de investigación. Este README es solo el punto de entrada rápido.
 
@@ -111,7 +111,7 @@ Ver [docs/losses.md](docs/losses.md).
 
 ## Documentación
 
-Punto de entrada: [docs/index.md](docs/index.md). Camino sugerido:
+Punto de entrada: [docs/](docs/README.md). Camino sugerido:
 [conceptual_overview](docs/conceptual_overview.md) → [architecture](docs/architecture.md) →
 [quickstart](docs/quickstart.md) → [losses](docs/losses.md) → [diagnostics](docs/diagnostics.md) →
 [api_reference](docs/api_reference.md). También: [data_pipeline](docs/data_pipeline.md),
