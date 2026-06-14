@@ -74,6 +74,11 @@ class ModelConfig:
 
 @dataclass
 class MaskedReconstructionConfig:
+    """Masked turn-embedding reconstruction objective (primary in bidirectional mode).
+
+    See ``docs/losses.md``. ``enabled=None`` defers the decision to the attention mode.
+    """
+
     # ``enabled=None`` means "decide from attention_mode" (see
     # train.resolve_losses_for_mode); set True/False to force it.
     enabled: Optional[bool] = None
@@ -87,6 +92,12 @@ class MaskedReconstructionConfig:
 
 @dataclass
 class NextTurnPredictionConfig:
+    """Next-turn embedding prediction objective (primary in autoregressive mode).
+
+    See ``docs/losses.md``. ``enabled=None`` defers the decision to the attention mode;
+    enabling it in bidirectional mode is leaky and emits a warning.
+    """
+
     # ``enabled=None`` means "decide from attention_mode" (see
     # train.resolve_losses_for_mode); set True/False to force it.
     enabled: Optional[bool] = None
@@ -135,6 +146,12 @@ class EmbeddingRetrievalConfig:
 
 @dataclass
 class LossConfig:
+    """Aggregates the self-supervised objectives and the shared cosine weight.
+
+    See ``docs/losses.md`` and ``train.resolve_losses_for_mode`` for how objectives are
+    enabled per attention mode.
+    """
+
     masked_reconstruction: MaskedReconstructionConfig = field(
         default_factory=MaskedReconstructionConfig
     )
@@ -165,6 +182,11 @@ class LossConfig:
 
 @dataclass
 class TrainingConfig:
+    """Optimization, device and checkpointing options for the training loop.
+
+    See ``docs/training.md`` and ``docs/configuration.md`` for field semantics.
+    """
+
     seed: int = 42
     batch_size: int = 32
     epochs: int = 5
@@ -185,6 +207,11 @@ class TrainingConfig:
 
 @dataclass
 class DataConfig:
+    """Canonical-data loading, windowing and column-name overrides.
+
+    See ``docs/data_pipeline.md`` and ``docs/configuration.md`` for field semantics.
+    """
+
     path: Optional[str] = None
     max_turns: int = 64
     window: str = "truncate"  # "truncate" | "sliding"

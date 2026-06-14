@@ -120,6 +120,25 @@ class ContextualTurnModel(nn.Module):
         attention_mask: torch.Tensor,
         speaker_ids: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
+        """Map base turn embeddings to contextual turn embeddings.
+
+        Args:
+            batch_embeddings: ``[B, S, input_dim]`` base embeddings ``e_t``.
+            attention_mask: ``[B, S]`` with ``1`` for real turns and ``0`` for padding.
+            speaker_ids: optional ``[B, S]`` speaker ids (ignored if the model has no
+                speaker embeddings or this is ``None``).
+
+        Returns:
+            ``[B, S, output_dim]`` contextual embeddings ``h_t``.
+
+        Raises:
+            ValueError: if ``S`` exceeds ``config.max_turns``.
+
+        Notes:
+            Padding is masked via ``src_key_padding_mask``. In ``autoregressive`` mode a
+            causal mask is added so turn ``t`` attends only to ``j <= t``; in
+            ``bidirectional`` mode every real turn attends to every other real turn.
+        """
         batch_size, seq_len, _ = batch_embeddings.shape
         if seq_len > self.config.max_turns:
             raise ValueError(
@@ -155,6 +174,13 @@ class ContextualTurnModel(nn.Module):
     def save_pretrained(
         self, output_dir: str, training_args: Optional[Dict[str, Any]] = None
     ) -> None:
+        """Save a Hugging Face-style checkpoint to ``output_dir``.
+
+        Writes ``config.json`` (the :class:`ModelConfig`) and ``model.safetensors``
+        (the full ``state_dict``, including ``mask_embedding`` and both heads), plus
+        ``training_args.json`` when ``training_args`` is given. The format is HF-style
+        for convenience only; this is not a ``transformers`` model.
+        """
         os.makedirs(output_dir, exist_ok=True)
         write_json(self.config.to_dict(), os.path.join(output_dir, CONFIG_NAME))
         save_safetensors(self.state_dict(), os.path.join(output_dir, WEIGHTS_NAME))
@@ -165,6 +191,12 @@ class ContextualTurnModel(nn.Module):
     def from_pretrained(
         cls, model_dir: str, device: str = "cpu"
     ) -> "ContextualTurnModel":
+        """Rebuild a model from a :meth:`save_pretrained` checkpoint.
+
+        Reads ``config.json`` to reconstruct the architecture, then loads
+        ``model.safetensors`` with a strict ``load_state_dict`` and moves the model to
+        ``device``. A mismatching architecture fails loudly.
+        """
         config = ModelConfig.from_dict(read_json(os.path.join(model_dir, CONFIG_NAME)))
         model = cls(config)
         state = load_safetensors(os.path.join(model_dir, WEIGHTS_NAME), device="cpu")
