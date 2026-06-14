@@ -24,6 +24,9 @@ __all__ = [
     "next_turn_prediction_loss",
     "apply_turn_masking",
     "build_next_turn_targets",
+    "embedding_retrieval_loss",
+    "masked_embedding_retrieval_loss",
+    "next_turn_embedding_retrieval_loss",
 ]
 
 
@@ -136,3 +139,92 @@ def apply_turn_masking(
     if mask_positions.any():
         masked[mask_positions] = mask_embedding.to(masked.dtype)
     return masked, mask_positions
+
+
+def embedding_retrieval_loss(
+    query_embeddings: torch.Tensor,
+    target_embeddings: torch.Tensor,
+    temperature: float = 0.07,
+    normalize: bool = True,
+) -> torch.Tensor:
+    """In-batch contrastive retrieval loss (turn-level vocab-projection analogue).
+
+    A turn-level analogue of the language-model output projection
+    ``h_t @ W_vocab.T -> logits``: here ``query @ target.T`` scores each contextual
+    embedding against a set of candidate turn embeddings. With in-batch candidates
+    every other row acts as a negative and the positive is the diagonal::
+
+        Q = normalize(query)              # [M, D]
+        T = normalize(target)             # [M, D]
+        scores = (Q @ T.T) / temperature  # [M, M]
+        loss = cross_entropy(scores, arange(M))
+
+    Args:
+        query_embeddings:  ``[M, D]`` contextual embeddings (one per target).
+        target_embeddings: ``[M, D]`` positive base embeddings (row-aligned to queries).
+        temperature: softmax temperature (must be > 0).
+        normalize: L2-normalize before the dot product (cosine scores).
+
+    Returns:
+        A differentiable scalar. **Empty-safe:** fewer than two candidates
+        (``M < 2``) gives no usable negatives, so a differentiable zero is returned.
+    """
+    if query_embeddings.shape[0] < 2:
+        return _zero_like(query_embeddings)
+    q = F.normalize(query_embeddings, dim=-1) if normalize else query_embeddings
+    t = F.normalize(target_embeddings, dim=-1) if normalize else target_embeddings
+    scores = (q @ t.t()) / temperature
+    labels = torch.arange(scores.shape[0], device=scores.device)
+    return F.cross_entropy(scores, labels)
+
+
+def masked_embedding_retrieval_loss(
+    hidden: torch.Tensor,
+    base_embeddings: torch.Tensor,
+    mask_positions: torch.Tensor,
+    temperature: float = 0.07,
+    normalize: bool = True,
+) -> torch.Tensor:
+    """Retrieval loss over masked positions (bidirectional use).
+
+    Queries are the contextual embeddings at masked turns; positives are the
+    original base embeddings of those same turns. Padding is never selected because
+    ``mask_positions`` already excludes it.
+
+    Args:
+        hidden:          ``[B, S, D]`` contextual embeddings (or projected queries).
+        base_embeddings: ``[B, S, D]`` original base embeddings (candidates/positives).
+        mask_positions:  ``[B, S]`` boolean tensor of masked target turns.
+    """
+    mask = mask_positions.bool()
+    if mask.sum() < 2:
+        return _zero_like(hidden)
+    return embedding_retrieval_loss(
+        hidden[mask], base_embeddings[mask], temperature, normalize
+    )
+
+
+def next_turn_embedding_retrieval_loss(
+    hidden: torch.Tensor,
+    next_targets: torch.Tensor,
+    valid_mask: torch.Tensor,
+    temperature: float = 0.07,
+    normalize: bool = True,
+) -> torch.Tensor:
+    """Retrieval loss over valid next-turn positions (autoregressive use).
+
+    Queries are the contextual states ``h_t``; positives are the next turn's base
+    embedding ``e_{t+1}``. ``valid_mask`` already excludes padding and final turns.
+
+    Args:
+        hidden:       ``[B, S, D]`` contextual embeddings (or projected queries).
+        next_targets: ``[B, S, D]`` next-turn base embeddings (see
+            :func:`build_next_turn_targets`).
+        valid_mask:   ``[B, S]`` boolean tensor of positions with a valid next turn.
+    """
+    valid = valid_mask.bool()
+    if valid.sum() < 2:
+        return _zero_like(hidden)
+    return embedding_retrieval_loss(
+        hidden[valid], next_targets[valid], temperature, normalize
+    )

@@ -15,6 +15,7 @@ __all__ = [
     "ModelConfig",
     "MaskedReconstructionConfig",
     "NextTurnPredictionConfig",
+    "EmbeddingRetrievalConfig",
     "LossConfig",
     "TrainingConfig",
     "DataConfig",
@@ -97,12 +98,51 @@ class NextTurnPredictionConfig:
 
 
 @dataclass
+class EmbeddingRetrievalConfig:
+    """Optional in-batch contrastive/retrieval objective (off by default).
+
+    A turn-level analogue of the LM vocabulary projection: contextual state @
+    candidate-embedding-matrix transpose -> scores over candidate turns.
+    """
+
+    enabled: bool = False
+    weight: float = 1.0
+    temperature: float = 0.07
+    normalize: bool = True
+    candidate_mode: str = "in_batch"  # only "in_batch" is supported for now
+    target: str = "auto"  # "auto" | "masked" | "next_turn"
+
+    def __post_init__(self) -> None:
+        if self.temperature <= 0:
+            raise ValueError(
+                f"embedding_retrieval.temperature must be > 0, got {self.temperature}"
+            )
+        if self.candidate_mode != "in_batch":
+            raise ValueError(
+                "embedding_retrieval.candidate_mode only supports 'in_batch' for now, "
+                f"got {self.candidate_mode!r}"
+            )
+        if self.target not in ("auto", "masked", "next_turn"):
+            raise ValueError(
+                "embedding_retrieval.target must be 'auto', 'masked' or 'next_turn', "
+                f"got {self.target!r}"
+            )
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "EmbeddingRetrievalConfig":
+        return cls(**_filter_kwargs(cls, data))
+
+
+@dataclass
 class LossConfig:
     masked_reconstruction: MaskedReconstructionConfig = field(
         default_factory=MaskedReconstructionConfig
     )
     next_turn_prediction: NextTurnPredictionConfig = field(
         default_factory=NextTurnPredictionConfig
+    )
+    embedding_retrieval: EmbeddingRetrievalConfig = field(
+        default_factory=EmbeddingRetrievalConfig
     )
     lambda_cosine: float = 1.0
 
@@ -115,6 +155,9 @@ class LossConfig:
             ),
             next_turn_prediction=NextTurnPredictionConfig.from_dict(
                 data.get("next_turn_prediction", {})
+            ),
+            embedding_retrieval=EmbeddingRetrievalConfig.from_dict(
+                data.get("embedding_retrieval", {})
             ),
             lambda_cosine=data.get("lambda_cosine", 1.0),
         )

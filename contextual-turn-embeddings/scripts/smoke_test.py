@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from contextual_turn_embeddings import (  # noqa: E402
     ContextualTurnModel,
     DialogueDataset,
+    EmbeddingRetrievalConfig,
     LossConfig,
     MaskedReconstructionConfig,
     ModelConfig,
@@ -153,6 +154,34 @@ def main() -> int:
         )
     assert any(issubclass(w.category, UserWarning) for w in caught), "expected leakage warning"
     check("bidirectional + next_turn_prediction -> emits leakage warning")
+
+    # ---- 3b. Optional embedding-retrieval objective (both modes) -------- #
+    set_seed(11)
+    # Bidirectional (target=auto -> masked positions).
+    retr_bi = resolve_losses_for_mode(
+        LossConfig(
+            masked_reconstruction=MaskedReconstructionConfig(mask_prob=0.6),
+            embedding_retrieval=EmbeddingRetrievalConfig(enabled=True),
+        ),
+        "bidirectional",
+    )
+    out_rb = compute_objectives(model_bi, batch, retr_bi)
+    assert "embedding_retrieval" in out_rb
+    assert torch.isfinite(out_rb["embedding_retrieval"]).all()
+    assert torch.isfinite(out_rb["total"]).all()
+
+    # Autoregressive (target=auto -> next-turn positions).
+    retr_ar = resolve_losses_for_mode(
+        LossConfig(embedding_retrieval=EmbeddingRetrievalConfig(enabled=True)),
+        "autoregressive",
+    )
+    out_ra = compute_objectives(model_ar, batch, retr_ar)
+    assert "embedding_retrieval" in out_ra
+    assert float(out_ra["embedding_retrieval"].detach()) > 0.0
+    check(
+        "embedding retrieval -> bidirectional masked + autoregressive next-turn finite "
+        f"(ar={float(out_ra['embedding_retrieval'].detach()):.4f})"
+    )
 
     # ---- 4. save_pretrained / from_pretrained roundtrip ----------------- #
     with tempfile.TemporaryDirectory() as tmp:

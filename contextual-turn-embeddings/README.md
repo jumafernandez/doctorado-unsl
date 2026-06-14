@@ -54,6 +54,50 @@ No functional labels (intent / dialogue act / slots) are required.
 
 Both use the same loss: `MSE + lambda_cosine * (1 - cosine_similarity)`.
 
+### Optional: embedding retrieval (in-batch contrastive)
+
+A turn-level analogue of the vocabulary projection in language models. Where a
+token LM computes `h_t @ W_vocab.T -> logits over the vocabulary`, here we compute
+
+```
+contextual state @ candidate turn-embedding matrix transpose -> scores over candidate turns
+```
+
+and train it with cross-entropy so the contextual embedding scores its *correct*
+target turn embedding above the others. It is **off by default** and configured
+under `losses.embedding_retrieval`:
+
+```yaml
+losses:
+  embedding_retrieval:
+    enabled: false
+    weight: 1.0
+    temperature: 0.07
+    normalize: true            # cosine scores
+    candidate_mode: in_batch   # only "in_batch" supported for now
+    target: auto               # "auto" | "masked" | "next_turn"
+```
+
+Loss: with queries `Q` and aligned positive targets `T`,
+`scores = normalize(Q) @ normalize(T).T / temperature`, label = the diagonal,
+`loss = cross_entropy(scores, labels)`. `target: auto` follows the attention mode:
+
+- **bidirectional** → queries are `h_t` at *masked* positions, positives are those
+  turns' base embeddings (compatible with masked reconstruction);
+- **autoregressive** → queries are `h_t`, positives are the *next* turn's base
+  embedding `e_{t+1}` (compatible with next-turn prediction).
+
+The query is the **raw contextual embedding** `h_t` when `output_dim == input_dim`
+(so the embedding itself becomes discriminative); if the dims differ, the existing
+projection head is reused. Padding is never used as a query or candidate, and with
+fewer than two valid candidates the loss is an empty-safe differentiable zero.
+Setting `target: next_turn` in `bidirectional` mode is leaky (`h_t` can attend to
+`t+1`) and emits a warning.
+
+**v1 uses in-batch candidates only.** Full-corpus candidates, sampled negatives,
+memory banks, and FAISS hard negatives are future extensions; the first version
+deliberately avoids any large (e.g. 1M-row) candidate matrix.
+
 ## Dataset format
 
 Canonical tabular format (CSV / Parquet / JSONL / pandas DataFrame).

@@ -32,7 +32,9 @@ from .encode import resolve_base_embeddings
 from .losses import (
     apply_turn_masking,
     build_next_turn_targets,
+    masked_embedding_retrieval_loss,
     masked_reconstruction_loss,
+    next_turn_embedding_retrieval_loss,
     next_turn_prediction_loss,
 )
 from .model import ContextualTurnModel
@@ -86,6 +88,22 @@ def resolve_losses_for_mode(loss_config: LossConfig, attention_mode: str) -> Los
         if masked.enabled is None:
             masked.enabled = False
 
+    retrieval = getattr(resolved, "embedding_retrieval", None)
+    if (
+        retrieval is not None
+        and retrieval.enabled
+        and attention_mode == "bidirectional"
+        and retrieval.target == "next_turn"
+    ):
+        warnings.warn(
+            "embedding_retrieval.target='next_turn' in bidirectional mode is leaky: "
+            "each contextual embedding h_t can attend to future turns (including "
+            "t+1), making next-turn retrieval near-trivial. Use target='auto' or "
+            "'masked' in bidirectional mode, or set attention_mode='autoregressive'.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     return resolved
 
 
@@ -105,10 +123,30 @@ def compute_objectives(
     speaker_ids = batch.get("speaker_ids")
     lam = loss_config.lambda_cosine
 
+    # Optional in-batch retrieval objective. ``target=auto`` is resolved from the
+    # attention mode (bidirectional -> masked positions; autoregressive -> next-turn).
+    retrieval = getattr(loss_config, "embedding_retrieval", None)
+    retrieval_on = bool(retrieval is not None and retrieval.enabled)
+    if retrieval_on:
+        if retrieval.target == "auto":
+            retrieval_target = (
+                "masked"
+                if model.config.attention_mode == "bidirectional"
+                else "next_turn"
+            )
+        else:
+            retrieval_target = retrieval.target
+        # Use the raw contextual embedding when dims match (so the embedding itself
+        # becomes discriminative); otherwise reuse the existing head as a projection.
+        same_dim = model.output_dim == model.input_dim
+
     results: Dict[str, torch.Tensor] = {}
     total: Optional[torch.Tensor] = None
 
-    if loss_config.masked_reconstruction.enabled:
+    need_masked = loss_config.masked_reconstruction.enabled or (
+        retrieval_on and retrieval_target == "masked"
+    )
+    if need_masked:
         masked_emb, mask_positions = apply_turn_masking(
             embeddings,
             attention_mask,
@@ -117,19 +155,41 @@ def compute_objectives(
             generator=generator,
         )
         hidden = model(masked_emb, attention_mask, speaker_ids)
-        predicted = model.reconstruction_head(hidden)
-        loss_m = masked_reconstruction_loss(predicted, embeddings, mask_positions, lam)
-        results["masked_reconstruction"] = loss_m
-        total = loss_config.masked_reconstruction.weight * loss_m
+        if loss_config.masked_reconstruction.enabled:
+            predicted = model.reconstruction_head(hidden)
+            loss_m = masked_reconstruction_loss(predicted, embeddings, mask_positions, lam)
+            results["masked_reconstruction"] = loss_m
+            total = loss_config.masked_reconstruction.weight * loss_m
+        if retrieval_on and retrieval_target == "masked":
+            query = hidden if same_dim else model.reconstruction_head(hidden)
+            loss_r = masked_embedding_retrieval_loss(
+                query, embeddings, mask_positions,
+                retrieval.temperature, retrieval.normalize,
+            )
+            results["embedding_retrieval"] = loss_r
+            contrib = retrieval.weight * loss_r
+            total = contrib if total is None else total + contrib
 
-    if loss_config.next_turn_prediction.enabled:
+    need_next = loss_config.next_turn_prediction.enabled or (
+        retrieval_on and retrieval_target == "next_turn"
+    )
+    if need_next:
         hidden = model(embeddings, attention_mask, speaker_ids)
-        predicted_next = model.next_turn_head(hidden)
         targets, valid = build_next_turn_targets(embeddings, attention_mask)
-        loss_n = next_turn_prediction_loss(predicted_next, targets, valid, lam)
-        results["next_turn_prediction"] = loss_n
-        contrib = loss_config.next_turn_prediction.weight * loss_n
-        total = contrib if total is None else total + contrib
+        if loss_config.next_turn_prediction.enabled:
+            predicted_next = model.next_turn_head(hidden)
+            loss_n = next_turn_prediction_loss(predicted_next, targets, valid, lam)
+            results["next_turn_prediction"] = loss_n
+            contrib = loss_config.next_turn_prediction.weight * loss_n
+            total = contrib if total is None else total + contrib
+        if retrieval_on and retrieval_target == "next_turn":
+            query = hidden if same_dim else model.next_turn_head(hidden)
+            loss_r = next_turn_embedding_retrieval_loss(
+                query, targets, valid, retrieval.temperature, retrieval.normalize,
+            )
+            results["embedding_retrieval"] = loss_r
+            contrib = retrieval.weight * loss_r
+            total = contrib if total is None else total + contrib
 
     results["total"] = total if total is not None else embeddings.sum() * 0.0
     return results

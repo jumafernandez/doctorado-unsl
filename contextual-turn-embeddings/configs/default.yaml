@@ -27,6 +27,17 @@ losses:
   next_turn_prediction:
     enabled: false
     weight: 1.0
+  # Optional in-batch contrastive/retrieval objective (off by default; does not
+  # change existing behavior). Turn-level analogue of the LM vocab projection:
+  # contextual state @ candidate-embedding-matrix transpose -> scores over turns.
+  # target=auto -> bidirectional uses masked positions, autoregressive uses next-turn.
+  embedding_retrieval:
+    enabled: false
+    weight: 1.0
+    temperature: 0.07
+    normalize: true
+    candidate_mode: in_batch   # only "in_batch" supported for now
+    target: auto               # "auto" | "masked" | "next_turn"
   lambda_cosine: 1.0
 
 training:

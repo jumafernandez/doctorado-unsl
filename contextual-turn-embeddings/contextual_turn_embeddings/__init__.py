@@ -16,6 +16,7 @@ from .config import (
     BaseEncoderConfig,
     Config,
     DataConfig,
+    EmbeddingRetrievalConfig,
     LossConfig,
     MaskedReconstructionConfig,
     ModelConfig,
@@ -33,8 +34,11 @@ from .encode import encode_dialogues, export, resolve_base_embeddings
 from .losses import (
     apply_turn_masking,
     build_next_turn_targets,
+    embedding_retrieval_loss,
+    masked_embedding_retrieval_loss,
     masked_reconstruction_loss,
     mse_cosine_loss,
+    next_turn_embedding_retrieval_loss,
     next_turn_prediction_loss,
 )
 from .model import ContextualTurnModel
@@ -51,6 +55,7 @@ __all__ = [
     "LossConfig",
     "MaskedReconstructionConfig",
     "NextTurnPredictionConfig",
+    "EmbeddingRetrievalConfig",
     "TrainingConfig",
     "DataConfig",
     "BaseEncoderConfig",
@@ -69,6 +74,9 @@ __all__ = [
     "next_turn_prediction_loss",
     "apply_turn_masking",
     "build_next_turn_targets",
+    "embedding_retrieval_loss",
+    "masked_embedding_retrieval_loss",
+    "next_turn_embedding_retrieval_loss",
     # training / encoding
     "compute_objectives",
     "resolve_losses_for_mode",
