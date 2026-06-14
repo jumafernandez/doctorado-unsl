@@ -203,13 +203,32 @@ directly:
 from contextual_turn_embeddings import BaseTurnEncoder
 enc = BaseTurnEncoder("sentence-transformers/all-mpnet-base-v2", normalize=True)
 vectors = enc.encode_texts(["hello", "how can I help?"])   # -> np.ndarray [2, dim]
+# encode() is an alias of encode_texts()
+vectors = enc.encode(["hello", "how can I help?"])
 ```
 
-It prefers `sentence-transformers` and falls back to `transformers` `AutoModel`
-with masked mean pooling. The contextual model auto-adapts its `input_dim` to the
-encoder's dimension, so MiniLM (384-d) and MPNet/D2F (768-d) both work without
-config changes. When swapping encoders at *encode* time, the encoder dimension
-must match the trained model's `input_dim`.
+The base-encoder libraries are an **optional extra** — install them with
+`pip install "contextual-turn-embeddings[encoders]"`. Models are downloaded from the
+Hugging Face Hub on first use (set `cache_dir` to control the cache location).
+
+Pick the backend explicitly with `backend`:
+
+```python
+BaseTurnEncoder(backend="auto", model_name=...)                 # default
+BaseTurnEncoder(backend="sentence_transformers", model_name=...)
+BaseTurnEncoder(backend="transformers", model_name=...)
+```
+
+- `"auto"` (default) prefers `sentence-transformers` and **falls back** to
+  `transformers` `AutoModel` (masked mean pooling) on any failure — the historical behavior.
+- A forced backend does **not** fall back: it raises a clear error if loading fails, and a
+  clear `ImportError` (pointing at the `[encoders]` extra) if the library is missing.
+- `self.backend` is the *configured* value (may be `"auto"`); `enc.resolved_backend` reports
+  which library was actually loaded (`"sentence_transformers"` or `"transformers"`).
+
+The contextual model auto-adapts its `input_dim` to the encoder's dimension, so MiniLM (384-d)
+and MPNet/D2F (768-d) both work without config changes. When swapping encoders at *encode* time,
+the encoder dimension must match the trained model's `input_dim`.
 
 ## HPC / non-CUDA environments (e.g. Intel-based clusters)
 

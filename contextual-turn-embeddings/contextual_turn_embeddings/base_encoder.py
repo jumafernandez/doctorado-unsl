@@ -15,17 +15,29 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from .config import BaseEncoderConfig
+from .config import BASE_ENCODER_BACKENDS, BaseEncoderConfig
 from .utils import text_hash
 
 __all__ = ["BaseTurnEncoder"]
+
+_EXTRAS_HINT = 'pip install "contextual-turn-embeddings[encoders]"'
 
 
 class BaseTurnEncoder:
     """Encode raw turn utterances into base embeddings.
 
-    Prefers ``sentence-transformers`` when the model is compatible; otherwise
-    falls back to ``transformers`` ``AutoModel`` with masked mean pooling.
+    The ``backend`` chooses how the model is loaded:
+
+    * ``"auto"`` (default) — try ``sentence-transformers`` first, then fall back to
+      ``transformers`` ``AutoModel`` with masked mean pooling (the historical behavior);
+    * ``"sentence_transformers"`` — use sentence-transformers only (no fallback);
+    * ``"transformers"`` — use plain transformers only.
+
+    ``self.backend`` is the *configured* backend (may be ``"auto"``); the
+    :attr:`resolved_backend` property reports which library was actually loaded
+    (``"sentence_transformers"`` or ``"transformers"``). A forced backend raises a
+    clear error if loading fails, and a missing optional library raises an
+    ``ImportError`` pointing at the ``[encoders]`` extra.
     """
 
     def __init__(
@@ -36,15 +48,21 @@ class BaseTurnEncoder:
         normalize: bool = False,
         freeze: bool = True,
         cache_dir: Optional[str] = None,
+        backend: str = "auto",
     ):
+        if backend not in BASE_ENCODER_BACKENDS:
+            raise ValueError(
+                f"backend must be one of {BASE_ENCODER_BACKENDS}, got {backend!r}"
+            )
         self.model_name = model_name
+        self.backend = backend  # configured backend (may be "auto")
         self.device_pref = device
         self.batch_size = batch_size
         self.normalize = normalize
         self.freeze = freeze
         self.cache_dir = cache_dir
 
-        self._backend: Optional[str] = None
+        self._backend: Optional[str] = None  # resolved after loading
         self._st_model = None
         self._hf_model = None
         self._hf_tokenizer = None
@@ -61,6 +79,7 @@ class BaseTurnEncoder:
             normalize=config.normalize,
             freeze=config.freeze,
             cache_dir=config.cache_dir,
+            backend=config.backend,
         )
 
     # ------------------------------------------------------------------ #
@@ -73,26 +92,49 @@ class BaseTurnEncoder:
 
         self._device = get_device(self.device_pref)
 
+        if self.backend == "sentence_transformers":
+            self._load_sentence_transformers()  # no fallback
+        elif self.backend == "transformers":
+            self._load_transformers()
+        else:  # "auto": prefer sentence-transformers, fall back to transformers
+            try:
+                self._load_sentence_transformers()
+            except Exception:  # noqa: BLE001 - any ST failure -> plain transformers
+                self._load_transformers()
+
+    def _load_sentence_transformers(self) -> None:
         try:
             from sentence_transformers import SentenceTransformer
-
+        except ImportError as exc:
+            raise ImportError(
+                "backend 'sentence_transformers' requires the 'sentence-transformers' "
+                f"package. Install the optional extra: {_EXTRAS_HINT}"
+            ) from exc
+        try:
             self._st_model = SentenceTransformer(
                 self.model_name,
                 device=str(self._device),
                 cache_folder=self.cache_dir,
             )
-            self._backend = "sentence-transformers"
-            self._embedding_dim = self._st_model.get_sentence_embedding_dimension()
-            if self.freeze:
-                for param in self._st_model.parameters():
-                    param.requires_grad = False
-            return
-        except Exception:  # noqa: BLE001 - fall back to plain transformers
-            pass
+        except Exception as exc:  # noqa: BLE001 - surface load/download failures
+            raise RuntimeError(
+                f"Failed to load SentenceTransformer model {self.model_name!r}: {exc}"
+            ) from exc
+        self._embedding_dim = self._st_model.get_sentence_embedding_dimension()
+        if self.freeze:
+            for param in self._st_model.parameters():
+                param.requires_grad = False
+        self._backend = "sentence_transformers"
 
-        import torch
-        from transformers import AutoModel, AutoTokenizer
-
+    def _load_transformers(self) -> None:
+        try:
+            import torch
+            from transformers import AutoModel, AutoTokenizer
+        except ImportError as exc:
+            raise ImportError(
+                "backend 'transformers' requires the 'transformers' package. "
+                f"Install the optional extra: {_EXTRAS_HINT}"
+            ) from exc
         self._hf_tokenizer = AutoTokenizer.from_pretrained(
             self.model_name, cache_dir=self.cache_dir
         )
@@ -104,8 +146,8 @@ class BaseTurnEncoder:
             for param in self._hf_model.parameters():
                 param.requires_grad = False
         self._embedding_dim = int(self._hf_model.config.hidden_size)
-        self._backend = "transformers"
         self._torch = torch
+        self._backend = "transformers"
 
     @property
     def embedding_dim(self) -> int:
@@ -114,7 +156,11 @@ class BaseTurnEncoder:
         return self._embedding_dim
 
     @property
-    def backend(self) -> str:
+    def resolved_backend(self) -> str:
+        """The backend actually loaded: ``"sentence_transformers"`` or ``"transformers"``.
+
+        (``self.backend`` is the *configured* value and may be ``"auto"``.)
+        """
         self._ensure_loaded()
         assert self._backend is not None
         return self._backend
@@ -132,10 +178,14 @@ class BaseTurnEncoder:
             return self._encode_with_cache(texts, batch_size)
         return self._encode_uncached(texts, batch_size)
 
+    def encode(self, texts: List[str], batch_size: int = 64) -> np.ndarray:
+        """Public alias of :meth:`encode_texts`."""
+        return self.encode_texts(texts, batch_size)
+
     def _encode_uncached(self, texts: List[str], batch_size: int) -> np.ndarray:
         if not texts:
             return np.zeros((0, self.embedding_dim), dtype=np.float32)
-        if self._backend == "sentence-transformers":
+        if self._backend == "sentence_transformers":
             emb = self._st_model.encode(
                 texts,
                 batch_size=batch_size,

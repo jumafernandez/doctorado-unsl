@@ -209,16 +209,30 @@ class DataConfig:
         return cls(**_filter_kwargs(cls, data))
 
 
+# Allowed values for the (configured) base-encoder backend.
+BASE_ENCODER_BACKENDS = ("auto", "sentence_transformers", "transformers")
+
+
 @dataclass
 class BaseEncoderConfig:
     """Configuration of the base turn encoder (``f1``)."""
 
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # Which backend to load: "auto" tries sentence-transformers first then falls
+    # back to plain transformers; "sentence_transformers"/"transformers" force one.
+    backend: str = "auto"
     batch_size: int = 64
     normalize: bool = False
     freeze: bool = True
     device: str = "auto"
     cache_dir: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if self.backend not in BASE_ENCODER_BACKENDS:
+            raise ValueError(
+                f"base_encoder.backend must be one of {BASE_ENCODER_BACKENDS}, "
+                f"got {self.backend!r}"
+            )
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "BaseEncoderConfig":

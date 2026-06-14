@@ -69,6 +69,7 @@ data:
 
 base_encoder:
   model_name: sentence-transformers/all-MiniLM-L6-v2
+  backend: auto           # "auto" | "sentence_transformers" | "transformers"
   batch_size: 64
   normalize: false
   freeze: true
