@@ -19,13 +19,15 @@ doctorado-unsl/
 ├── README.md · PLAN.md · LICENSE
 ├── .vscode/                              # config de editor versionada a propósito (ver su README)
 ├── packages/                             # CÓDIGO de investigación (paquetes instalables)
-│   └── contextual-turn-embeddings/       # representaciones de turnos (f1/f2)
+│   ├── contextual-turn-embeddings/       # representaciones de turnos (f1/f2)
+│   └── conversational-ann/               # evaluación ANN/retrieval (en construcción)
 └── doctorado-escrito/                    # TESIS (fuentes LaTeX)
 ```
 
 | Carpeta | Qué es | Detalle |
 |---|---|---|
 | [`packages/contextual-turn-embeddings/`](packages/contextual-turn-embeddings/README.md) | Paquete de PyTorch para **embeddings contextuales de turnos de diálogo**. | [README](packages/contextual-turn-embeddings/README.md) · [docs](packages/contextual-turn-embeddings/docs/README.md) |
+| [`packages/conversational-ann/`](packages/conversational-ann/README.md) | Evaluación **ANN/retrieval** de representaciones de turnos (Static/Dynamic/EMA/Contextual). *En construcción.* | [README](packages/conversational-ann/README.md) |
 | [`doctorado-escrito/`](doctorado-escrito/README.md) | Fuentes **LaTeX de la tesis** (estructura modular, compila con `latexmk`/Overleaf). | [README](doctorado-escrito/README.md) |
 | [`.vscode/`](.vscode/README.md) | Configuración de **LaTeX Workshop** para compilar la tesis (versionada a propósito, portable). | [README](.vscode/README.md) |
 
@@ -75,7 +77,7 @@ documenta el marco teórico, la metodología y los resultados.
 
 ---
 
-## 1. Paquete: `contextual-turn-embeddings`
+## Paquete: `contextual-turn-embeddings`
 
 Genera, para una secuencia de turnos de diálogo, **un embedding contextual por turno**:
 
@@ -162,7 +164,21 @@ Más detalle en [`contextual-turn-embeddings/README.md`](packages/contextual-tur
 
 ---
 
-## 2. Tesis: `doctorado-escrito`
+## Paquete: `conversational-ann` (en construcción)
+
+Evaluación de **recuperación ANN** de representaciones de turnos para memoria conversacional en
+TOD: compara **Static**, **Dynamic (cumulative)**, **EMA** y **Contextual** (`h_t`) recuperando
+turnos similares de *otros* diálogos (cross-dialogue). Roadmap: índices **FAISS**, métrica
+**MSS@10**, comparación estadística (Wilcoxon) y, opcionalmente, juez LLM. Consume los embeddings
+exportados por `contextual-turn-embeddings`.
+
+Hoy es un **scaffold** instalable y testeable; la lógica de evaluación se incorporará migrando el
+trabajo previo. Detalle en
+[`packages/conversational-ann/README.md`](packages/conversational-ann/README.md).
+
+---
+
+## Tesis: `doctorado-escrito`
 
 Fuentes LaTeX de la tesis, con estructura modular (preámbulo en `config/`, capítulos en
 `chapters/`, figuras/tablas por capítulo). Documento raíz: `thesis.tex`.
@@ -177,7 +193,7 @@ o en Overleaf. Detalle completo (requisitos, `minted`, portada) en
 
 ---
 
-## 3. Entorno: `.vscode/`
+## Entorno: `.vscode/`
 
 `settings.json` configura **LaTeX Workshop** para compilar la tesis con `latexmk` (lee
 `doctorado-escrito/.latexmkrc`). Se versiona a propósito porque es **portable** (sin rutas
