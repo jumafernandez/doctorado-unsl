@@ -194,6 +194,12 @@ class DialogueDataset(Dataset):
         embeddings: ``[N, D]`` base embeddings aligned by position to ``df``.
         max_turns / window / stride: windowing controls.
         num_speakers / speaker_map: speaker handling (ignored if no ``speaker``).
+        lazy: when ``True``, do not copy/reorder ``embeddings`` into RAM; read each
+            window's rows on demand (pass an ``np.memmap`` to train on datasets
+            larger than memory). In lazy mode ``ROW_ID`` is the **row index into
+            ``embeddings``**, so a *subset* ``df`` (e.g. with held-out dialogues
+            removed) can train directly from the full memmap. Default ``False``
+            reproduces the eager behavior (``embeddings`` aligned by position to ``df``).
     """
 
     def __init__(
@@ -206,19 +212,43 @@ class DialogueDataset(Dataset):
         stride: int = 32,
         num_speakers: int = 4,
         speaker_map: Optional[Dict[str, int]] = None,
+        lazy: bool = False,
     ):
-        if len(df) != len(embeddings):
-            raise ValueError(
-                f"df length ({len(df)}) != embeddings length ({len(embeddings)})"
-            )
         # Accept either an already-normalized frame or a raw canonical one.
         if ROW_ID not in df.columns:
             df = normalize_columns(df)
+        self.lazy = lazy
         self.df = sort_dialogues(df)
-        # `sort_dialogues` resets the index, so re-align the embedding matrix to
-        # the sorted row order using the stable ROW_ID captured before sorting.
-        self.embeddings = np.asarray(embeddings, dtype=np.float32)
-        self._reindex_embeddings(df)
+
+        if lazy:
+            # `ROW_ID` is the row index into `embeddings` (typically an `np.memmap`).
+            # `__getitem__` reads only each window's rows on demand, so datasets
+            # larger than RAM train from disk. Because ROW_ID is the memmap index, a
+            # *subset* df (e.g. with held-out dialogues removed) can train directly
+            # from the full memmap without copying.
+            self._row_map = self.df[ROW_ID].to_numpy().astype(np.int64, copy=False)
+            if len(self._row_map) and int(self._row_map.max()) >= len(embeddings):
+                raise ValueError(
+                    f"ROW_ID max ({int(self._row_map.max())}) is out of bounds for "
+                    f"embeddings with {len(embeddings)} rows"
+                )
+            self.embeddings = embeddings  # no copy/reindex
+        else:
+            if len(df) != len(embeddings):
+                raise ValueError(
+                    f"df length ({len(df)}) != embeddings length ({len(embeddings)})"
+                )
+            # `sort_dialogues` reorders rows; map each sorted-df position back to its
+            # original embedding row (input `embeddings` align by position to `df`
+            # before sorting; ROW_ID is the stable key across both), then materialize
+            # a contiguous float32 copy already in sorted order.
+            pos_by_rowid = {int(r): i for i, r in enumerate(df[ROW_ID].to_numpy())}
+            self._row_map = np.fromiter(
+                (pos_by_rowid[int(r)] for r in self.df[ROW_ID].to_numpy()),
+                dtype=np.int64,
+                count=len(self.df),
+            )
+            self.embeddings = np.asarray(embeddings, dtype=np.float32)[self._row_map]
         self.embedding_dim = int(self.embeddings.shape[1])
 
         self.max_turns = max_turns
@@ -232,22 +262,18 @@ class DialogueDataset(Dataset):
             for start, end in build_windows(len(positions), max_turns, window, stride):
                 self.windows.append(positions[start:end])
 
-    def _reindex_embeddings(self, original_df: pd.DataFrame) -> None:
-        """Reorder ``self.embeddings`` to match the sorted ``self.df``."""
-        # ``original_df`` rows align with ``embeddings`` rows by position.
-        # ``self.df`` is the same rows sorted; ROW_ID is stable across both.
-        orig_rowids = original_df[ROW_ID].to_numpy()
-        pos_by_rowid = {int(r): i for i, r in enumerate(orig_rowids)}
-        new_order = [pos_by_rowid[int(r)] for r in self.df[ROW_ID].to_numpy()]
-        self.embeddings = self.embeddings[new_order]
-
     def __len__(self) -> int:
         return len(self.windows)
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         positions = self.windows[idx]
         rows = self.df.iloc[positions]
-        emb = torch.from_numpy(self.embeddings[positions]).float()
+        if self.lazy:
+            # Map sorted-df positions -> original rows, then read from the memmap.
+            emb_np = np.asarray(self.embeddings[self._row_map[positions]], dtype=np.float32)
+        else:
+            emb_np = self.embeddings[positions]
+        emb = torch.from_numpy(np.ascontiguousarray(emb_np)).float()
 
         speaker_ids = None
         if self.has_speaker:

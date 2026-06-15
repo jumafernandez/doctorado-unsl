@@ -47,12 +47,20 @@ class ModelConfig:
     layer_norm: bool = True
     ff_dim: Optional[int] = None  # defaults to 4 * hidden_dim
     activation: str = "gelu"
+    # Residual-to-base output: h_t = LayerNorm(e_t + delta). Anchors the contextual
+    # embedding near its base embedding (requires output_dim == input_dim).
+    output_residual: bool = False
 
     def __post_init__(self) -> None:
         if self.output_dim is None:
             self.output_dim = self.input_dim
         if self.ff_dim is None:
             self.ff_dim = 4 * self.hidden_dim
+        if self.output_residual and self.output_dim != self.input_dim:
+            raise ValueError(
+                "output_residual=True requires output_dim == input_dim "
+                f"(got input_dim={self.input_dim}, output_dim={self.output_dim})"
+            )
         if self.attention_mode not in ("bidirectional", "autoregressive"):
             raise ValueError(
                 "attention_mode must be 'bidirectional' or 'autoregressive', "

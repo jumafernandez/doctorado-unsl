@@ -98,6 +98,15 @@ class ContextualTurnModel(nn.Module):
             nn.Linear(hidden, dout) if dout != hidden else nn.Identity()
         )
 
+        # Optional residual-to-base output: h_t = LayerNorm(e_t + delta). Anchors the
+        # contextual embedding near its base embedding (requires output_dim == input_dim,
+        # validated in ModelConfig). Created only when enabled so existing checkpoints
+        # (output_residual=False) keep loading unchanged.
+        self.output_residual = bool(getattr(config, "output_residual", False))
+        self.output_residual_norm: Optional[nn.Module] = (
+            nn.LayerNorm(din) if self.output_residual else None
+        )
+
         # Learned [MASK] vector in *input* space (replaces base embeddings).
         self.mask_embedding = nn.Parameter(torch.empty(din))
         nn.init.normal_(self.mask_embedding, std=0.02)
@@ -138,6 +147,8 @@ class ContextualTurnModel(nn.Module):
             Padding is masked via ``src_key_padding_mask``. In ``autoregressive`` mode a
             causal mask is added so turn ``t`` attends only to ``j <= t``; in
             ``bidirectional`` mode every real turn attends to every other real turn.
+            When ``config.output_residual`` is set, the output is
+            ``LayerNorm(e_t + delta)`` (anchored to the base embedding) instead of ``delta``.
         """
         batch_size, seq_len, _ = batch_embeddings.shape
         if seq_len > self.config.max_turns:
@@ -166,7 +177,11 @@ class ContextualTurnModel(nn.Module):
         hidden = self.encoder(
             x, mask=attn_mask, src_key_padding_mask=key_padding_mask
         )
-        return self.output_proj(hidden)
+        delta = self.output_proj(hidden)
+        if self.output_residual:
+            # ``delta`` lives in input space (output_dim == input_dim); anchor h_t to e_t.
+            return self.output_residual_norm(batch_embeddings + delta)
+        return delta
 
     # ------------------------------------------------------------------ #
     # Hugging Face-style persistence

@@ -1,0 +1,74 @@
+# Config base para entrenar `contextual-turn-encoder-base` sobre Dialog2Flow.
+#
+# El notebook 02 fija por variante:
+#   - attention_mode + losses:  AR -> next_turn_prediction (+ opcional embedding_retrieval
+#     target=next_turn);  Bidi -> masked_reconstruction.
+#   - escala del corpus:  full (3,4M) o 1m (recortado/ablación).
+# Las bases e_t provienen de `sergioburdisso/dialog2flow-joint-bert-base` (768-d).
+
+model:
+  input_dim: 768
+  hidden_dim: 768
+  output_dim: 768          # vive en el mismo espacio que las bases (comparación coseno)
+  num_layers: 4            # robusto (full) puede subir a 6; el 1m queda en 4
+  num_heads: 8
+  dropout: 0.1
+  max_turns: 64
+  attention_mode: autoregressive   # el notebook entrena AR y Bidi (override por variante)
+  use_speaker_embeddings: true
+  num_speakers: 4
+  layer_norm: true
+  output_residual: true    # h_t = LayerNorm(e_t + delta): ancla h_t cerca de e_t
+                           # (arregla la deriva ortogonal; análogo aprendido del acumulativo)
+
+losses:
+  # enabled=null -> resuelto por attention_mode (resolve_losses_for_mode):
+  #   bidirectional  -> masked_reconstruction ON, next_turn OFF
+  #   autoregressive -> next_turn_prediction ON, masked OFF
+  masked_reconstruction:
+    enabled: null
+    mask_prob: 0.15
+    weight: 1.0
+  next_turn_prediction:
+    enabled: null
+    weight: 1.0
+  # Contrastivo CO-PRIMARIO (el downstream es retrieval). weight=1.0 ~ igual que la
+  # regresión. El notebook 02 lo activa (target se resuelve por modo: AR->next_turn,
+  # Bidi->masked, evitando el combo leaky).
+  embedding_retrieval:
+    enabled: true
+    weight: 1.0
+    temperature: 0.07
+    normalize: true
+    candidate_mode: in_batch
+    target: auto             # en AR -> next_turn ; en Bidi -> masked
+  lambda_cosine: 1.0
+
+training:
+  seed: 42
+  batch_size: 128
+  epochs: 10
+  learning_rate: 0.0002      # 2e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  gradient_clip_norm: 1.0
+  device: mps                # M2; usar "cuda" en GPU/cluster
+  mixed_precision: false
+  num_workers: 0
+  log_interval: 100
+  output_dir: models/contextual-turn-encoder-base
+
+data:
+  max_turns: 64
+  window: truncate
+  stride: 32
+  # held-out: dialogue_ids excluidos por heldout.py (semilla 42). Rutas a los datos
+  # (metadata + base_embeddings memmap) se definen en el notebook 02.
+
+base_encoder:
+  model_name: sergioburdisso/dialog2flow-joint-bert-base
+  backend: sentence_transformers
+  batch_size: 64
+  normalize: false
+  freeze: true
+  device: auto

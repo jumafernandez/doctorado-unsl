@@ -13,6 +13,7 @@ model:
   use_speaker_embeddings: true
   num_speakers: 4
   layer_norm: true
+  output_residual: false  # if true: h_t = LayerNorm(e_t + delta) (requires output_dim==input_dim)
 
 # Loss objectives. With enabled=null the objective follows the attention mode
 # (bidirectional -> masked only; autoregressive -> next-turn). The defaults below
