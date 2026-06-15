@@ -1,0 +1,11 @@
+# Núcleo
+numpy
+pandas
+
+# Opcional — backends de evaluación (se irán habilitando con el código):
+#   pip install faiss-cpu scipy
+# Dev:
+#   pip install pytest
+
+# Paquete hermano (instalar por separado, es local del monorepo):
+#   pip install -e ../contextual-turn-embeddings

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editors / OS
+.DS_Store
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Run artifacts
+models/
+outputs/
+indexes/
+*.log
+.pytest_cache/
