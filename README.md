@@ -1,6 +1,6 @@
 # doctorado-unsl
 
-[![codigo: MIT](https://img.shields.io/badge/c%C3%B3digo-MIT-blue.svg)](contextual-turn-embeddings/LICENSE)
+[![codigo: MIT](https://img.shields.io/badge/c%C3%B3digo-MIT-blue.svg)](packages/contextual-turn-embeddings/LICENSE)
 [![tesis: CC BY 4.0](https://img.shields.io/badge/tesis-CC_BY_4.0-lightgrey.svg)](doctorado-escrito/LICENSE)
 
 Monorepo del doctorado en Ciencias de la Computación (Universidad Nacional de San Luis).
@@ -16,15 +16,16 @@ seguir. Cada sub-proyecto tiene además su propio README con el detalle.
 
 ```
 doctorado-unsl/
-├── README.md                     # este índice
-├── .vscode/                      # config de editor versionada a propósito (ver su README)
-├── contextual-turn-embeddings/   # PAQUETE de investigación (PyTorch)
-└── doctorado-escrito/            # TESIS (fuentes LaTeX)
+├── README.md · PLAN.md · LICENSE
+├── .vscode/                              # config de editor versionada a propósito (ver su README)
+├── packages/                             # CÓDIGO de investigación (paquetes instalables)
+│   └── contextual-turn-embeddings/       # representaciones de turnos (f1/f2)
+└── doctorado-escrito/                    # TESIS (fuentes LaTeX)
 ```
 
 | Carpeta | Qué es | Detalle |
 |---|---|---|
-| [`contextual-turn-embeddings/`](contextual-turn-embeddings/README.md) | Paquete de PyTorch para **embeddings contextuales de turnos de diálogo**. | [README](contextual-turn-embeddings/README.md) · [docs](contextual-turn-embeddings/docs/README.md) |
+| [`packages/contextual-turn-embeddings/`](packages/contextual-turn-embeddings/README.md) | Paquete de PyTorch para **embeddings contextuales de turnos de diálogo**. | [README](packages/contextual-turn-embeddings/README.md) · [docs](packages/contextual-turn-embeddings/docs/README.md) |
 | [`doctorado-escrito/`](doctorado-escrito/README.md) | Fuentes **LaTeX de la tesis** (estructura modular, compila con `latexmk`/Overleaf). | [README](doctorado-escrito/README.md) |
 | [`.vscode/`](.vscode/README.md) | Configuración de **LaTeX Workshop** para compilar la tesis (versionada a propósito, portable). | [README](.vscode/README.md) |
 
@@ -60,7 +61,7 @@ La línea se ubica en la intersección de aprendizaje **simbólico**, **subsimb�
 **neuro-simbólico**, con un plan a seis semestres (del estado del arte a la escritura y
 publicación).
 
-**Dónde encaja este repositorio.** El paquete [`contextual-turn-embeddings`](contextual-turn-embeddings/README.md)
+**Dónde encaja este repositorio.** El paquete [`contextual-turn-embeddings`](packages/contextual-turn-embeddings/README.md)
 aporta a la **base representacional** de la línea: aprende **representaciones contextuales de
 turnos** sobre datos conversacionales (estilo Dialog2Flow) —pasando de embeddings de turno
 *estáticos* a representaciones *contextuales aprendidas* (un encoder tipo "BERT/GPT sobre turnos"
@@ -102,26 +103,26 @@ omitir `f1` y partir de embeddings precomputados.
 | `utils.py` | Utilidades: semilla, device, máscaras de atención, IO YAML/JSON, safetensors. |
 | `__init__.py` | API pública del paquete. |
 
-### Documentación (en español) — [`docs/`](contextual-turn-embeddings/docs/README.md)
+### Documentación (en español) — [`docs/`](packages/contextual-turn-embeddings/docs/README.md)
 
 Ruta de lectura sugerida: panorama conceptual → arquitectura → quickstart → losses → diagnósticos
 → referencia de API.
 
 | Documento | Contenido |
 |---|---|
-| [`conceptual_overview.md`](contextual-turn-embeddings/docs/conceptual_overview.md) | La idea de investigación: contextualización a nivel *turno* vs *token*; base vs contextual. |
-| [`architecture.md`](contextual-turn-embeddings/docs/architecture.md) | Arquitectura completa + convención de shapes (`B, S, D_in, D_out`). |
-| [`quickstart.md`](contextual-turn-embeddings/docs/quickstart.md) | Uso mínimo end-to-end. |
-| [`data_pipeline.md`](contextual-turn-embeddings/docs/data_pipeline.md) | Formato canónico, columnas, alineación, padding, metadata. |
-| [`base_encoder.md`](contextual-turn-embeddings/docs/base_encoder.md) | `f1`: backends, descargas, `encode`/`encode_texts`, precomputados. |
-| [`contextual_model.md`](contextual-turn-embeddings/docs/contextual_model.md) | `f2`: modos de atención, embeddings posicionales/de speaker, save/load. |
-| [`losses.md`](contextual-turn-embeddings/docs/losses.md) | Los tres objetivos, con fórmulas y shapes; la idea `H @ E.T`. |
-| [`training.md`](contextual-turn-embeddings/docs/training.md) | Flujo de entrenamiento y progresión experimental sugerida. |
-| [`encoding_and_export.md`](contextual-turn-embeddings/docs/encoding_and_export.md) | Cómo codificar y exportar `h_t` (`.npy` + `metadata.csv` + `config.json`). |
-| [`diagnostics.md`](contextual-turn-embeddings/docs/diagnostics.md) | Los cinco diagnósticos de contextualidad. |
-| [`configuration.md`](contextual-turn-embeddings/docs/configuration.md) | Referencia de todos los campos de configuración. |
-| [`api_reference.md`](contextual-turn-embeddings/docs/api_reference.md) | Referencia de API curada (clases/funciones públicas). |
-| [`research_notes.md`](contextual-turn-embeddings/docs/research_notes.md) | Notas conceptuales orientadas a tesis y limitaciones metodológicas. |
+| [`conceptual_overview.md`](packages/contextual-turn-embeddings/docs/conceptual_overview.md) | La idea de investigación: contextualización a nivel *turno* vs *token*; base vs contextual. |
+| [`architecture.md`](packages/contextual-turn-embeddings/docs/architecture.md) | Arquitectura completa + convención de shapes (`B, S, D_in, D_out`). |
+| [`quickstart.md`](packages/contextual-turn-embeddings/docs/quickstart.md) | Uso mínimo end-to-end. |
+| [`data_pipeline.md`](packages/contextual-turn-embeddings/docs/data_pipeline.md) | Formato canónico, columnas, alineación, padding, metadata. |
+| [`base_encoder.md`](packages/contextual-turn-embeddings/docs/base_encoder.md) | `f1`: backends, descargas, `encode`/`encode_texts`, precomputados. |
+| [`contextual_model.md`](packages/contextual-turn-embeddings/docs/contextual_model.md) | `f2`: modos de atención, embeddings posicionales/de speaker, save/load. |
+| [`losses.md`](packages/contextual-turn-embeddings/docs/losses.md) | Los tres objetivos, con fórmulas y shapes; la idea `H @ E.T`. |
+| [`training.md`](packages/contextual-turn-embeddings/docs/training.md) | Flujo de entrenamiento y progresión experimental sugerida. |
+| [`encoding_and_export.md`](packages/contextual-turn-embeddings/docs/encoding_and_export.md) | Cómo codificar y exportar `h_t` (`.npy` + `metadata.csv` + `config.json`). |
+| [`diagnostics.md`](packages/contextual-turn-embeddings/docs/diagnostics.md) | Los cinco diagnósticos de contextualidad. |
+| [`configuration.md`](packages/contextual-turn-embeddings/docs/configuration.md) | Referencia de todos los campos de configuración. |
+| [`api_reference.md`](packages/contextual-turn-embeddings/docs/api_reference.md) | Referencia de API curada (clases/funciones públicas). |
+| [`research_notes.md`](packages/contextual-turn-embeddings/docs/research_notes.md) | Notas conceptuales orientadas a tesis y limitaciones metodológicas. |
 
 ### Scripts (`scripts/`)
 
@@ -148,7 +149,7 @@ descarga un modelo está marcado y se omite salvo que se active una variable de 
 ### Cómo empezar (paquete)
 
 ```bash
-cd contextual-turn-embeddings
+cd packages/contextual-turn-embeddings
 python -m venv .venv && source .venv/bin/activate
 pip install -e .                 # núcleo (entrena/codifica con embeddings precomputados)
 pip install -e ".[encoders]"     # opcional: f1 desde texto (sentence-transformers/transformers)
@@ -157,7 +158,7 @@ python scripts/smoke_test.py     # verificación rápida en CPU
 python -m pytest -q              # tests (download-free)
 ```
 
-Más detalle en [`contextual-turn-embeddings/README.md`](contextual-turn-embeddings/README.md).
+Más detalle en [`contextual-turn-embeddings/README.md`](packages/contextual-turn-embeddings/README.md).
 
 ---
 
@@ -202,7 +203,7 @@ Ver [`.vscode/README.md`](.vscode/README.md).
 El repositorio se publica por defecto bajo **MIT** ([`LICENSE`](LICENSE) en la raíz). Por
 sub-proyecto:
 
-- **Código** (`contextual-turn-embeddings/`): [MIT](contextual-turn-embeddings/LICENSE).
+- **Código** (`contextual-turn-embeddings/`): [MIT](packages/contextual-turn-embeddings/LICENSE).
 - **Tesis** (`doctorado-escrito/`): texto y figuras propias bajo
   [CC BY 4.0](doctorado-escrito/LICENSE) (el `LICENSE` de esa carpeta tiene precedencia sobre el
   de la raíz para su contenido).

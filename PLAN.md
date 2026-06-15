@@ -61,7 +61,7 @@ la publicación de las contribuciones.
 
 ## Relación con este repositorio
 
-- [`contextual-turn-embeddings/`](contextual-turn-embeddings/README.md) — pieza de código que aporta
+- [`contextual-turn-embeddings/`](packages/contextual-turn-embeddings/README.md) — pieza de código que aporta
   a la **base representacional** de la línea: aprende representaciones contextuales de turnos sobre
   datos conversacionales (estilo Dialog2Flow), insumo para **inducir estructura** (objetivo 1) y
   para las **métricas de similitud entre diálogos** (objetivo 4).
