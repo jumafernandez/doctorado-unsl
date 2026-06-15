@@ -1,5 +1,8 @@
 # doctorado-unsl
 
+[![codigo: MIT](https://img.shields.io/badge/c%C3%B3digo-MIT-blue.svg)](contextual-turn-embeddings/LICENSE)
+[![tesis: CC BY 4.0](https://img.shields.io/badge/tesis-CC_BY_4.0-lightgrey.svg)](doctorado-escrito/LICENSE)
+
 Monorepo del doctorado en Ciencias de la Computación (Universidad Nacional de San Luis).
 Reúne, en un mismo repositorio, el **código de investigación** y la **tesis escrita**, más la
 configuración de entorno necesaria para trabajar en ambos.
@@ -27,14 +30,47 @@ doctorado-unsl/
 
 ---
 
-## Línea de investigación
+## Sobre el doctorado
 
-Memoria conversacional y representaciones de turnos para **diálogo orientado a tareas (TOD)**.
-El eje es la progresión desde embeddings de turno *estáticos* hacia representaciones
-*contextuales aprendidas* (un encoder tipo "BERT/GPT sobre turnos" en lugar de tokens), pensadas
-para recuperación (retrieval) y memoria conversacional. El paquete
-`contextual-turn-embeddings` es la pieza de código de esa línea; la tesis documenta el marco
-teórico, la metodología y los resultados.
+**Título:** *Integración de modelos de lenguaje y planificación a partir de flujos
+conversacionales inducidos en agentes híbridos para sistemas de diálogo orientados a tareas.*
+
+- **Doctorando:** Mg. Juan Manuel Fernández.
+- **Directores:** Dr. Sergio Burdisso (Idiap Research Institute, Suiza) y Dr. Marcelo Errecalde
+  (LIDIC, Universidad Nacional de San Luis).
+- **Marco institucional:** trabajo desarrollado en el **LICDIA** (Laboratorio de Ciencia de Datos
+  e IA, Universidad Nacional de Luján), con colaboración de **LIDIC** (UNSL) e **Idiap** (Suiza).
+
+**Objetivo general.** Explorar y diseñar un enfoque **híbrido (neuro-simbólico)** para sistemas de
+diálogo orientados a tareas (TOD) que combine **modelos de lenguaje** con **estructuras simbólicas
+inducidas a partir de conversaciones reales**, para obtener agentes más **consistentes,
+explicables y robustos**.
+
+**Objetivos específicos.**
+1. Extraer representaciones simbólicas de datos conversacionales **no anotados** (identificar
+   regiones de intención y construir grafos de transición).
+2. Formalizar esos grafos como **procesos de decisión (MDP)**: estados, acciones, transiciones y
+   recompensas.
+3. Integrar modelos de lenguaje bajo **control simbólico/neuro-simbólico**, restringiendo las
+   acciones a los grafos inducidos.
+4. Diseñar **métricas de similitud entre diálogos** basadas en los grafos de transición, para
+   evaluar la coherencia estructural.
+
+La línea se ubica en la intersección de aprendizaje **simbólico**, **subsimbólico** y
+**neuro-simbólico**, con un plan a seis semestres (del estado del arte a la escritura y
+publicación).
+
+**Dónde encaja este repositorio.** El paquete [`contextual-turn-embeddings`](contextual-turn-embeddings/README.md)
+aporta a la **base representacional** de la línea: aprende **representaciones contextuales de
+turnos** sobre datos conversacionales (estilo Dialog2Flow) —pasando de embeddings de turno
+*estáticos* a representaciones *contextuales aprendidas* (un encoder tipo "BERT/GPT sobre turnos"
+en lugar de tokens)—. Esas representaciones son insumo natural para **inducir estructura** (regiones
+de intención / flujos, objetivo 1) y para las **métricas de similitud entre diálogos** (objetivo 4),
+además de servir a la memoria conversacional y la recuperación. La tesis ([`doctorado-escrito/`](doctorado-escrito/README.md))
+documenta el marco teórico, la metodología y los resultados.
+
+> 📄 **Plan de tesis:** [`PLAN.md`](PLAN.md) (resumen versionado) · también disponible como
+> [documento de trabajo en Google Docs](https://docs.google.com/document/d/10kLlYUa0xdmvAgl3k0UBwHb0-oEDgZNddLcM7jNs7wA/edit?usp=sharing).
 
 ---
 
@@ -158,3 +194,18 @@ Ver [`.vscode/README.md`](.vscode/README.md).
   sistema (`.DS_Store`) están ignorados por los `.gitignore` correspondientes.
 - **Monorepo:** el repositorio agrupa código y escritura del doctorado, y puede alojar carpetas
   hermanas adicionales (p. ej. publicaciones) a medida que avanza el trabajo.
+
+---
+
+## Licencias
+
+El repositorio se publica por defecto bajo **MIT** ([`LICENSE`](LICENSE) en la raíz). Por
+sub-proyecto:
+
+- **Código** (`contextual-turn-embeddings/`): [MIT](contextual-turn-embeddings/LICENSE).
+- **Tesis** (`doctorado-escrito/`): texto y figuras propias bajo
+  [CC BY 4.0](doctorado-escrito/LICENSE) (el `LICENSE` de esa carpeta tiene precedencia sobre el
+  de la raíz para su contenido).
+
+Los materiales de terceros (datasets como Dialog2Flow, modelos preentrenados, plantillas)
+conservan sus licencias originales.
