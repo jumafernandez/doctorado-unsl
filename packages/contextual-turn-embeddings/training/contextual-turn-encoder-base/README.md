@@ -9,7 +9,12 @@ Es un modelo **nuevo y propio**; **Dialog2Flow es solo el linaje de datos**, no 
 
 ## Datos y linaje (apples-to-apples)
 - **Dataset:** [`sergioburdisso/dialog2flow-dataset`](https://huggingface.co/datasets/sergioburdisso/dialog2flow-dataset)
-  (corpus unificado de 20 datasets TOD, ~3,4M turnos / ~369k diálogos).
+  (corpus unificado de 20 datasets TOD, ~3,4M turnos / ~369k diálogos según la ficha).
+- **Corpus efectivo del modelo `full`:** **1.974.814 turnos / 196.365 diálogos (19/20 configs)**.
+  Se **excluyó `SimJointGEN`** por un error de carga upstream (`DatasetGenerationError`,
+  persistente con `force_redownload`). No afecta la comparación: `SimJointGEN` es data **sintética**
+  y la **colección del benchmark (1M) cortaba en SGD, antes de SimJointGEN**, así que el conjunto de
+  evaluación nunca lo contuvo.
 - **Encoder base f1 (fijo):** [`sergioburdisso/dialog2flow-joint-bert-base`](https://huggingface.co/sergioburdisso/dialog2flow-joint-bert-base)
   (768-d) — el **mismo** que usan las baselines ANN (Static / Dynamic / EMA), condición dura para
   que la comparación sea justa.
@@ -19,8 +24,8 @@ Modo de atención × escala de corpus:
 
 | Checkpoint | Modo | Corpus | Para qué |
 |---|---|---|---|
-| `contextual-turn-encoder-base-ar-full`   | autoregresivo | full (3,4M) | **headline** del benchmark (causal, análogo aprendido de Dynamic/EMA) |
-| `contextual-turn-encoder-base-bidi-full` | bidireccional | full (3,4M) | techo full-context / inducción de estructura |
+| `contextual-turn-encoder-base-ar-full`   | autoregresivo | full (~1,97M, 19/20) | **headline** del benchmark (causal, análogo aprendido de Dynamic/EMA) |
+| `contextual-turn-encoder-base-bidi-full` | bidireccional | full (~1,97M, 19/20) | techo full-context / inducción de estructura |
 | `contextual-turn-encoder-base-ar-1m`     | autoregresivo | 1M (recortado) | ablación |
 | `contextual-turn-encoder-base-bidi-1m`   | bidireccional | 1M (recortado) | ablación |
 

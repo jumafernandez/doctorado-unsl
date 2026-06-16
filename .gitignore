@@ -1,3 +1,8 @@
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
+
+# Datos pesados (no versionar): embeddings, metadata, checkpoints
+data/
+*.npy
+*.pkl
