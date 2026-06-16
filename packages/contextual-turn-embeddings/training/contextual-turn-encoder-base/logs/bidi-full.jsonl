@@ -1,0 +1,10 @@
+{"mode": "bidirectional", "epoch": 1, "train_loss": 3.41986, "val_loss": 3.57963, "epoch_sec": 1278.6}
+{"mode": "bidirectional", "epoch": 2, "train_loss": 2.16521, "val_loss": 3.17761, "epoch_sec": 1099.3}
+{"mode": "bidirectional", "epoch": 3, "train_loss": 1.75156, "val_loss": 3.00788, "epoch_sec": 1105.8}
+{"mode": "bidirectional", "epoch": 4, "train_loss": 1.43924, "val_loss": 2.9518, "epoch_sec": 1904.1}
+{"mode": "bidirectional", "epoch": 5, "train_loss": 1.16854, "val_loss": 2.9893, "epoch_sec": 1159.4}
+{"mode": "bidirectional", "epoch": 6, "train_loss": 0.94373, "val_loss": 3.02662, "epoch_sec": 1110.8}
+{"mode": "bidirectional", "epoch": 7, "train_loss": 0.76426, "val_loss": 3.02846, "epoch_sec": 1166.8}
+{"mode": "bidirectional", "epoch": 8, "train_loss": 0.63033, "val_loss": 3.0518, "epoch_sec": 1117.7}
+{"mode": "bidirectional", "epoch": 9, "train_loss": 0.53636, "val_loss": 3.03342, "epoch_sec": 1062.4}
+{"mode": "bidirectional", "epoch": 10, "train_loss": 0.48214, "val_loss": 3.03056, "epoch_sec": 986.7}

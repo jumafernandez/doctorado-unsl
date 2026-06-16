@@ -56,6 +56,45 @@ los `dialogue_id` correspondientes.
    AR y Bidi leyendo las bases vía **memmap** (`DialogueDataset(lazy=True)`; no entran en RAM),
    excluyendo el held-out. Guarda con `save_pretrained` (config.json + model.safetensors + log).
 
+## Curvas de entrenamiento
+
+Cada variante se entrenó **10 épocas** (`batch=128`, AdamW `lr=2e-4`, `weight_decay=0.01`,
+warmup 5%, `dropout=0.1`, contrastivo co-primario y residual-to-base; detalle en
+[`config.yaml`](config.yaml)). El loss es el **compuesto del modo** (AR: `next_turn` +
+contrastivo · Bidi: `masked` + contrastivo).
+
+![Curvas de entrenamiento — 4 variantes](figures/loss_overview.png)
+
+**Cómo leerlas:**
+- **Las 4 convergen por validación en la época 4** y a partir de ahí *overfittean* (el
+  train sigue cayendo, el val se aplana y repunta). El checkpoint que se distribuye es el
+  **best-by-val (ep4)**, guardado en `…/<variant>/best/` — **no** la última época.
+  → En la práctica, **5 épocas alcanzan**; las 10 fueron de más.
+- **`full` generaliza un poco mejor que `1m`** (AR: val 4.676 vs 4.711 · Bidi: 2.952 vs
+  3.022): más datos ayudan, poco y como se espera.
+- ⚠️ **Los loss NO son comparables entre modos.** AR optimiza *next-turn* (el futuro es
+  inherentemente impredecible → piso alto ~4.7); Bidi optimiza *masked reconstruction* (ve
+  pasado **y** futuro → tarea más fácil → val ~3.0, train <0.5). Que `2.95 < 4.68` **no**
+  significa "Bidi es mejor": es otra tarea. La comparación válida entre modos es
+  **downstream** (ANN/MSS), no estas curvas.
+- El val interno es un **proxy** del objetivo auto-supervisado, no el veredicto de calidad
+  del embedding — eso lo dan los diagnósticos de contextualidad + la evaluación downstream
+  (`packages/conversational-ann`).
+
+<details>
+<summary><b>Curvas individuales por variante</b></summary>
+
+| | |
+|:---:|:---:|
+| ![AR · full](figures/loss_ar-full.png) | ![Bidi · full](figures/loss_bidi-full.png) |
+| ![AR · 1M](figures/loss_ar-1m.png) | ![Bidi · 1M](figures/loss_bidi-1m.png) |
+
+</details>
+
+Regenerar: **`python plot_training_curves.py`** (lee `logs/*.jsonl`, escribe `figures/*.png`;
+requiere `matplotlib`). Los `logs/` son los `trainlog.jsonl` de cada corrida, versionados como
+fuente de las figuras.
+
 ## Cómo cargar el modelo
 Los pesos **no van a git** (`models/` está gitignored): se distribuyen como **asset de un GitHub
 Release** del repo `doctorado-unsl` (interno). 
