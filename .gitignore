@@ -6,3 +6,8 @@ Thumbs.db
 data/
 *.npy
 *.pkl
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

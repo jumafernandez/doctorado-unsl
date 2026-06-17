@@ -1,0 +1,8 @@
+{
+  "corpus": "1m",
+  "label": "dialog_acts",
+  "n_collection": 1000023,
+  "n_queries": 5000,
+  "seed": 42,
+  "metric": "cross-dialogue act-match P@k"
+}
