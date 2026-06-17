@@ -115,7 +115,7 @@ Punto de entrada: [docs/](docs/README.md). Camino sugerido:
 [conceptual_overview](docs/conceptual_overview.md) → [architecture](docs/architecture.md) →
 [quickstart](docs/quickstart.md) → [losses](docs/losses.md) → [diagnostics](docs/diagnostics.md) →
 [api_reference](docs/api_reference.md). También: [data_pipeline](docs/data_pipeline.md),
-[contextual_model](docs/contextual_model.md), [encoding_and_export](docs/encoding_and_export.md),
+[model/v1](docs/model/v1.md), [model/v2](docs/model/v2.md), [encoding_and_export](docs/encoding_and_export.md),
 [configuration](docs/configuration.md), [research_notes](docs/research_notes.md).
 
 ## Tests

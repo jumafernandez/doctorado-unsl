@@ -97,7 +97,7 @@ return h                                         # [B, S, D_out]
   Existen siempre en el modelo (aunque la pérdida correspondiente esté apagada), de modo que el
   checkpoint sea autocontenido.
 
-Detalle en [contextual_model.md](contextual_model.md).
+Detalle del modelo por versión en [model/v1.md](model/v1.md) (v1) y [model/v2.md](model/v2.md) (v2).
 
 ### Comportamiento de save/load
 `save_pretrained(dir)` escribe `config.json` + `model.safetensors` (+ `training_args.json` si se

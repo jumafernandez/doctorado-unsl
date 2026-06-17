@@ -53,10 +53,10 @@ backend forzado no cae y lanza error claro.
 
 ---
 
-## `model.py`
+## `model/` (arquitecturas v1/v2)
 
 ### `ContextualTurnModel`
-`f2` (`nn.Module`): secuencia de `e_t` → secuencia de `h_t`.
+`f2` **v1** (`nn.Module`): secuencia de `e_t` → secuencia de `h_t`.
 
 - `forward(batch_embeddings [B,S,D_in], attention_mask [B,S], speaker_ids [B,S] | None) -> [B,S,D_out]`
   — _pitfall:_ `S > max_turns` lanza `ValueError`.
@@ -68,6 +68,15 @@ backend forzado no cae y lanza error claro.
 
 _Atributos útiles:_ `.config` (`ModelConfig`), `.input_dim`, `.output_dim`, `.mask_embedding`,
 `.reconstruction_head`, `.next_turn_head`, `.speaker_embedding` (o `None`).
+
+### `ContextualTurnModelV2` (v2)
+Port **fiel de BERT** (post-LN). Misma interfaz pública que `ContextualTurnModel`
+(`forward`/`encode`/`save_pretrained`/`from_pretrained` + los mismos atributos). Ver
+[model/v2.md](model/v2.md).
+
+### `build_model(config)`
+Selector de arquitectura: devuelve `ContextualTurnModel` (`arch="v1"`) o
+`ContextualTurnModelV2` (`arch="v2"`).
 
 ---
 

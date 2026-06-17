@@ -42,7 +42,9 @@ incluso entrenar `f2` directamente sobre embeddings precomputados (p. ej. de Dia
 | [quickstart.md](quickstart.md) | Instalación y un ejemplo mínimo ejecutable en CPU. |
 | [data_pipeline.md](data_pipeline.md) | Formato de datos canónico, alineación, padding, metadata. |
 | [base_encoder.md](base_encoder.md) | `BaseTurnEncoder` (`f1`): backends, descargas, caché. |
-| [contextual_model.md](contextual_model.md) | `ContextualTurnModel` (`f2`): forward, modos, save/load. |
+| [model/v1.md](model/v1.md) | `ContextualTurnModel` (`f2`, **v1**): forward, modos, save/load. |
+| [model/v2.md](model/v2.md) | `ContextualTurnModelV2` (`f2`, **v2**): port fiel de BERT + registro de divergencias. |
+| [model/v2_diff_recap.md](model/v2_diff_recap.md) | Índice de diferencias v2↔BERT con `archivo:línea`. |
 | [losses.md](losses.md) | Los tres objetivos auto-supervisados (incluye `embedding_retrieval`). |
 | [training.md](training.md) | Flujo de entrenamiento y progresión experimental sugerida. |
 | [encoding_and_export.md](encoding_and_export.md) | Codificar y exportar embeddings contextuales. |

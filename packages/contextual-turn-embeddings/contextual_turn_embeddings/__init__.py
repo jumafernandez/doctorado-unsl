@@ -41,7 +41,8 @@ from .losses import (
     next_turn_embedding_retrieval_loss,
     next_turn_prediction_loss,
 )
-from .model import ContextualTurnModel
+from .factory import build_model
+from .model import ContextualTurnModel, ContextualTurnModelV2
 from .train import compute_objectives, resolve_losses_for_mode, train
 from .utils import get_device, set_seed
 
@@ -62,6 +63,8 @@ __all__ = [
     # f1 / f2
     "BaseTurnEncoder",
     "ContextualTurnModel",
+    "ContextualTurnModelV2",
+    "build_model",
     # data
     "DialogueDataset",
     "collate_dialogues",

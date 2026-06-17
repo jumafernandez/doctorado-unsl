@@ -77,11 +77,18 @@ def encode_contextual(name, ckpt, df, e_used, device="mps"):
         if arr.shape[0] == len(df):
             log(f"  reuso rep guardada: {out.name} {arr.shape}")
             return np.asarray(arr)
-    from contextual_turn_embeddings import ContextualTurnModel, encode_dialogues
+    import json as _json
+
+    from contextual_turn_embeddings import encode_dialogues
     from contextual_turn_embeddings.data import ROW_ID
 
-    log(f"  cargando modelo {ckpt.name} ...")
-    model = ContextualTurnModel.from_pretrained(str(ckpt))
+    arch = _json.loads((ckpt / "config.json").read_text()).get("arch", "v1")
+    if arch == "v2":
+        from contextual_turn_embeddings import ContextualTurnModelV2 as _Model
+    else:
+        from contextual_turn_embeddings import ContextualTurnModel as _Model
+    log(f"  cargando modelo {ckpt.name} (arch={arch}) ...")
+    model = _Model.from_pretrained(str(ckpt))
     t0 = time.time()
     matrix, meta = encode_dialogues(
         model, df, embeddings=e_used, device=device, batch_dialogues=32
@@ -156,10 +163,14 @@ def evaluate_random(q_idx, q_labels, row_labels, dialogue_ids, k=10, seed=42):
 
 
 def contextual_specs(args):
-    return [
-        ("Contextual-AR", f"contextual-turn-encoder-base-ar-{args.corpus}"),
-        ("Contextual-Bidi", f"contextual-turn-encoder-base-bidi-{args.corpus}"),
+    cand = [
+        ("Contextual-AR (v1)", f"contextual-turn-encoder-base-ar-{args.corpus}"),
+        ("Contextual-Bidi (v1)", f"contextual-turn-encoder-base-bidi-{args.corpus}"),
+        ("Contextual-AR (v2)", f"contextual-turn-encoder-base-v2-ar-{args.corpus}"),
+        ("Contextual-Bidi (v2)", f"contextual-turn-encoder-base-v2-bidi-{args.corpus}"),
     ]
+    # solo los que tienen checkpoint entrenado (permite correr incremental v1/v2)
+    return [(s, f) for (s, f) in cand if (MODELS / f / "best").exists() or (MODELS / f).exists()]
 
 
 def phase_encode(args):

@@ -23,7 +23,7 @@ viven en el espacio del mismo encoder base.
 
 | Representación | P@1 | P@10 |
 |---|---|---|
-| **Contextual-Bidi** | **0.983** | **0.969** |
+| **Contextual-Bidi** | **0.982** | **0.969** |
 | **Contextual-AR** | 0.979 | 0.965 |
 | Static | 0.963 | 0.945 |
 | EMA(α0.6) | 0.963 | 0.882 |

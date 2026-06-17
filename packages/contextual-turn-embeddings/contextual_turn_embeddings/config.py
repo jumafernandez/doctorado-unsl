@@ -50,6 +50,11 @@ class ModelConfig:
     # Residual-to-base output: h_t = LayerNorm(e_t + delta). Anchors the contextual
     # embedding near its base embedding (requires output_dim == input_dim).
     output_residual: bool = False
+    # --- v2 (BERT-faithful port). Additive and backward-compatible: v1 ignores these
+    # (the v1 ContextualTurnModel never reads them). See docs/model/v2.md. ---
+    arch: str = "v1"  # "v1" (custom, pre-LN) | "v2" (BERT-faithful, post-LN)
+    head_mode: str = "tied_continuous"  # "tied_continuous" | "tied_codebook" | "learned" (Fase 2)
+    head_transform: bool = True  # v2: apply BertPredictionHeadTransform before the decoder
 
     def __post_init__(self) -> None:
         if self.output_dim is None:
@@ -70,6 +75,13 @@ class ModelConfig:
             raise ValueError(
                 f"hidden_dim ({self.hidden_dim}) must be divisible by "
                 f"num_heads ({self.num_heads})"
+            )
+        if self.arch not in ("v1", "v2"):
+            raise ValueError(f"arch must be 'v1' or 'v2', got {self.arch!r}")
+        if self.head_mode not in ("tied_continuous", "tied_codebook", "learned"):
+            raise ValueError(
+                "head_mode must be 'tied_continuous', 'tied_codebook' or 'learned', "
+                f"got {self.head_mode!r}"
             )
 
     @classmethod

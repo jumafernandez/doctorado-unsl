@@ -2,7 +2,7 @@
 
 Este documento explica la **idea de investigación** detrás del paquete, sin entrar en
 detalles de implementación (para eso, ver [architecture.md](architecture.md) y
-[contextual_model.md](contextual_model.md)).
+[model/v1.md](model/v1.md)).
 
 ## 1. Contextualización a nivel de token vs. a nivel de turno
 

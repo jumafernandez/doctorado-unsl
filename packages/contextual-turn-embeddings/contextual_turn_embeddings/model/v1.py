@@ -19,8 +19,8 @@ from typing import Any, Dict, Optional
 import torch
 import torch.nn as nn
 
-from .config import ModelConfig
-from .utils import (
+from ..config import ModelConfig
+from ..utils import (
     build_causal_mask,
     load_safetensors,
     padding_mask_from_attention,
