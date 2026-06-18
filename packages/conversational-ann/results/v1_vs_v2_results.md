@@ -5,8 +5,10 @@
 arquitectura:** v1 (custom, pre-LN + residual `h=LayerNorm(e_t+Δ)`) vs v2 (BERT-fiel, post-LN, sin
 residual). Objetivo: *aislar el efecto de la arquitectura*.
 
-> Nota de fairness: v1 corrió 10 épocas (best ep4, después overfit); **v2 corrió solo 5 y seguía
-> bajando** → los números de v2 son, si acaso, una **cota conservadora**.
+> ⚠️ **Provisional.** Esta corrida de v2 fue a **5 épocas** (v1 está a 10) y v2 **seguía bajando** →
+> sus números son una **cota conservadora**. Se rehace a **10 épocas** con la notebook M2
+> [`03_train_contextual_v2_m2.ipynb`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/03_train_contextual_v2_m2.ipynb)
+> (la corre el usuario) y se actualiza esta tabla.
 
 ## 1. Curva de eval-loss
 
@@ -69,6 +71,6 @@ Es la confirmación limpia de algo que veníamos diciendo:
 
 ## Reproducibilidad
 
-- Entrenamiento: [`train_arch_1m.py`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/train_arch_1m.py) `--arch v2 --modes ar bidi` (orquestado por `run_v2_experiment.sh`).
-- Eval: [`eval_prelim.py`](../scripts/eval_prelim.py) (corpus 1m, `encode` + `metric`) — ahora maneja v1 **y** v2.
-- Curvas: `plot_v1_vs_v2.py`.
+- **Entrenamiento v2:** notebook M2 [`03_train_contextual_v2_m2.ipynb`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/03_train_contextual_v2_m2.ipynb) (espejo del v1, `arch="v2"` vía `build_model`).
+- **Eval act-match:** [`eval_prelim.py`](../scripts/eval_prelim.py) (corpus 1m, `encode` + `metric`) — maneja v1 **y** v2.
+- **Curvas:** [`plot_v1_vs_v2.py`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/plot_v1_vs_v2.py).

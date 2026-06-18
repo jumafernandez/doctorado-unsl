@@ -55,6 +55,10 @@ los `dialogue_id` correspondientes.
 2. **[`02_train_contextual_m2.ipynb`](02_train_contextual_m2.ipynb)** — en el **M2/MPS**: entrena
    AR y Bidi leyendo las bases vía **memmap** (`DialogueDataset(lazy=True)`; no entran en RAM),
    excluyendo el held-out. Guarda con `save_pretrained` (config.json + model.safetensors + log).
+3. **[`03_train_contextual_v2_m2.ipynb`](03_train_contextual_v2_m2.ipynb)** — **gemela del v2**
+   (BERT-fiel): idéntica a la 02 pero con `build_model(arch="v2")`. Para la **comparación controlada
+   v1 ↔ v2** (mismos datos/objetivo, solo cambia la arquitectura). Ver
+   [`docs/model/v2.md`](../../docs/model/v2.md) y `conversational-ann/results/v1_vs_v2_results.md`.
 
 ## Curvas de entrenamiento
 
