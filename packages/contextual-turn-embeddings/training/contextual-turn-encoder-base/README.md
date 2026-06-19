@@ -82,7 +82,9 @@ los `dialogue_id` correspondientes.
    weight decay en bias/LayerNorm). El punto de partida fiel desde el cual innovar. Ver
    [`docs/model/v2.md`](../../docs/model/v2.md).
 
-## Curvas de entrenamiento
+## Curvas de entrenamiento — v1 (arquitectura custom)
+
+> Estas curvas son del **v1** (las 4 variantes AR/Bidi × full/1m). La comparación con v2 está más abajo.
 
 Cada variante se entrenó **10 épocas** (`batch=128`, AdamW `lr=2e-4`, `weight_decay=0.01`,
 warmup 5%, `dropout=0.1`, contrastivo co-primario y residual-to-base; detalle en
@@ -120,6 +122,28 @@ contrastivo · Bidi: `masked` + contrastivo).
 Regenerar: **`python plot_training_curves.py`** (lee `logs/*.jsonl`, escribe `figures/*.png`;
 requiere `matplotlib`). Los `logs/` son los `trainlog.jsonl` de cada corrida, versionados como
 fuente de las figuras.
+
+## Curvas de entrenamiento — comparación v1 ↔ v2 (full)
+
+Mismo `f1`, mismo held-out, mismo objetivo y **misma receta** (`lr 2e-4`) — **lo único que cambia es la
+arquitectura** (v1 custom pre-LN + residual ↔ v2 BERT-fiel post-LN). Es el control limpio.
+
+![v1 vs v2 — full (val sólido, train punteado)](figures/v1_vs_v2_full_curves.png)
+
+| modo | v1 best | v2 best | Δ |
+|---|---|---|---|
+| **AR** | 4.676 (ep4) | **4.278** (ep15) | **v2 −0.40** |
+| **Bidi** | 2.952 (ep4) | **2.845** (ep11) | **v2 −0.107** |
+
+- **v2 gana el eval en los dos modos y overfittea mucho menos:** el val del v1 (rojo) *sube* después de
+  ep4; el del v2 (azul) se queda plano en su mínimo. La arquitectura BERT-fiel (post-LN, sin el residual
+  que anclaba a `e_t`) entrena más sano.
+- **Los dos modos de v2 convergen dentro de 15** (AR ~ep6, Bidi ~ep11).
+- ⏳ **v3** (BERT-base literal 12/12 + receta de BERT) se suma solo a estas curvas en cuanto entrene
+  (`python plot_full_results.py`).
+
+Detalle y reproducibilidad: [`train_eval_results.md`](train_eval_results.md).
+Regenerar: **`python plot_full_results.py`** (lee los `trainlog.jsonl`, version-aware).
 
 ## Cómo cargar el modelo
 Los pesos **no van a git** (`models/` está gitignored): se distribuyen como **asset de un GitHub

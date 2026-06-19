@@ -9,17 +9,17 @@ cambia es la arquitectura** (v1 custom pre-LN + residual ↔ v2 BERT-fiel post-L
 > **Viene el v3** — BERT-base literal (12 capas/12 heads) con la receta de pretraining de BERT
 > (`lr 1e-4`, no-decay): el simil-BERT más fiel posible. Cuando termine de entrenar, `plot_full_results.py`
 > lo suma solo a estas curvas (v1/v2/v3). Ver el cuadro de las tres versiones en el
-> [model card](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/README.md).
+> [model card](README.md).
 
 ## Curvas
 
 **v2 (train + val):**
 
-![v2 full](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/figures/v2_full_curves.png)
+![v2 full](figures/v2_full_curves.png)
 
 **v1 vs v2 (val sólido, train punteado):**
 
-![v1 vs v2 full](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/figures/v1_vs_v2_full_curves.png)
+![v1 vs v2 full](figures/v1_vs_v2_full_curves.png)
 
 ## Eval loss (best-by-val)
 
@@ -50,6 +50,6 @@ loss, en los dos modos y con mucho menos overfitting. Es el resultado limpio y c
 
 ## Reproducibilidad
 
-- **Entrenamiento:** [`03_train_contextual_v2_m2.ipynb`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/03_train_contextual_v2_m2.ipynb) (`CORPUS="full"`).
-- **Curvas:** [`plot_full_results.py`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/plot_full_results.py).
+- **Entrenamiento:** [`03_train_contextual_v2_m2.ipynb`](03_train_contextual_v2_m2.ipynb) (`CORPUS="full"`).
+- **Curvas:** [`plot_full_results.py`](plot_full_results.py).
 - **Act-match v1↔v2 (1m):** `eval_prelim.py` (`--phase encode/metric`).
