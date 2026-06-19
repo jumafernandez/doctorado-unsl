@@ -1,76 +1,50 @@
-# v1 ↔ v2 — comparación controlada (1m)
+# v1 ↔ v2 — comparación de entrenamiento (full)
 
-**Experimento control** (2026-06-17): mismo `f1` (D2F), corpus `1m`, held-out (seed 42), objetivo
-(next-turn/masked + contrastivo co-primario), hiperparámetros y split. **Lo único que cambia es la
-arquitectura:** v1 (custom, pre-LN + residual `h=LayerNorm(e_t+Δ)`) vs v2 (BERT-fiel, post-LN, sin
-residual). Objetivo: *aislar el efecto de la arquitectura*.
+**(2026-06-19)** Comparación **controlada** sobre el corpus **full** (~1.97M turnos): mismo `f1`, mismo
+held-out (semilla 42), mismo objetivo, **mismo optimizador** (`lr=2e-4`), misma data — **lo único que
+cambia es la arquitectura** (v1 custom pre-LN + residual ↔ v2 BERT-fiel post-LN). v1 = 10 épocas, v2 = 15.
 
-> ⚠️ **Provisional.** Esta corrida de v2 fue a **5 épocas** (v1 está a 10) y v2 **seguía bajando** →
-> sus números son una **cota conservadora**. Se rehace a **10 épocas** con la notebook M2
-> [`03_train_contextual_v2_m2.ipynb`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/03_train_contextual_v2_m2.ipynb)
-> (la corre el usuario) y se actualiza esta tabla.
+> (La comparación previa en `1m` queda superada por esta, sobre todos los datos.)
 
-## 1. Curva de eval-loss
+## Curvas
 
-![v1 vs v2 — eval loss](v1_vs_v2_curves.png)
+**v2 (train + val):**
 
-| época | v1-AR | v2-AR | v1-Bidi | v2-Bidi |
-|---|---|---|---|---|
-| 1 | 5.147 | 4.758 | 3.624 | 3.740 |
-| 2 | 4.860 | 4.567 | 3.221 | 3.345 |
-| 3 | 4.753 | 4.479 | 3.064 | 3.149 |
-| 4 | 4.711 | 4.425 | 3.022 | 3.045 |
-| 5 | 4.718 ↑ | 4.394 ↓ | 3.048 ↑ | 2.982 ↓ |
-| **best** | **4.711** (ep4) | **4.394** (ep5, sigue ↓) | **3.022** (ep4) | **2.982** (ep5, sigue ↓) |
+![v2 full](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/figures/v2_full_curves.png)
 
-**Lectura:** **v2 gana claro la curva** — val más baja y **sin overfittear** en 5 épocas, mientras
-v1 ya se aplana/overfittea en ep4 (`↑`). Tiene sentido: post-LN + **sin el residual** que ancla a
-`e_t` → v2 queda más libre para minimizar el objetivo. (Esto atiende justo la queja de "el eval loss
-no baja": **es la arquitectura**.)
+**v1 vs v2 (val sólido, train punteado):**
 
-## 2. Act-match P@k (estructura funcional del turno)
+![v1 vs v2 full](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/figures/v1_vs_v2_full_curves.png)
 
-| representación | P@1 | P@10 |
-|---|---|---|
-| **Contextual-Bidi (v1)** | 0.982 | **0.969** |
-| **Contextual-AR (v1)** | 0.979 | 0.965 |
-| **Contextual-AR (v2)** | **0.980** | 0.962 |
-| **Contextual-Bidi (v2)** | 0.978 | 0.958 |
-| Static | 0.963 | 0.945 |
-| EMA(α0.6) | 0.963 | 0.882 |
-| Acumulativo | 0.940 | 0.786 |
-| Random (piso) | 0.322 | 0.329 |
+## Eval loss (best-by-val)
 
-**Lectura:** **v2 ≈ v1**, marginalmente *abajo* en P@10 (sobre todo Bidi: 0.958 vs 0.969). Ambos
-**≫ baselines**. El v1 con residual preserva un toque mejor la señal de acto.
+| modo | v1 best | v2 best | Δ |
+|---|---|---|---|
+| **AR** | 4.676 (ep4) | **4.278** (ep15) | **v2 −0.40** |
+| **Bidi** | 2.952 (ep4) | **2.845** (ep11) | **v2 −0.107** |
 
-## 3. Lo importante — la **disociación**
+## Lectura
 
-> **v2 baja MÁS el eval loss pero NO mejora act-match (lo empeora un poco).**
+- **v2 gana el eval loss en los dos modos** y, sobre todo, **overfittea muchísimo menos**: el val del
+  **v1 sube** después de ep4 (mejor en ep4, después se degrada); el del **v2 se queda plano** en su
+  mínimo. La arquitectura BERT-fiel (post-LN, **sin el residual** que ancla a `e_t`) entrena más sano.
+- **Convergencia:** v2-AR ~ep6, v2-Bidi ~ep11 → **los dos convergen dentro de 15** ⇒ **30 épocas eran
+  innecesarias** (el LR-decay las estira pero no agrega nada).
+- **train vs val:** v2 ajusta el train **más fuerte** (train más bajo) **y** generaliza mejor (val más
+  bajo). El residual del v1 le *subía* el train (lo restringía) sin bajarle el val.
 
-Es la confirmación limpia de algo que veníamos diciendo:
-- El **eval loss es un proxy, no el veredicto**: una arquitectura con loss más bajo **no** dio mejor
-  downstream.
-- El **residual de v1** (`h=LayerNorm(e_t+Δ)`) es un **regularizador**: *cuesta* eval-loss pero
-  *ayuda* act-match (ancla `h_t` al `e_t` rico en acto). v2, sin él, gana loss y pierde un poco de
-  estructura-de-acto.
+## Conclusión
 
-## 4. Conclusión
+Sobre **todos los datos**, la arquitectura **BERT-fiel (v2) le gana claramente al custom (v1)** en eval
+loss, en los dos modos y con mucho menos overfitting. Es el resultado limpio y citable del control.
 
-- La **arquitectura SÍ afecta la dinámica de entrenamiento** (v2 = curva mucho más sana), **pero NO
-  el downstream act-match** (≈ v1).
-- Refuerza el claim de la línea: **el lever no es la arquitectura, es el objetivo** (Fase 2 / codebook).
-- Para la tesis: *"probamos un BERT estándar y fiel; mejora la curva pero no cambia la conclusión
-  downstream → la palanca está en el objetivo, no en la arquitectura."*
-
-## Pendiente
-
-- **MSS@10 (situación) para v2** — necesita el juez LLM (key + costo). Es la métrica que *de verdad*
-  requiere contexto; ahí vive la pregunta real (¿alguno le gana a EMA?).
-- **AR como decoder probabilístico** (softmax sobre codebook + cross-entropy) — Fase 2.
+> **Caveat de siempre:** el eval loss es un **proxy**. El veredicto **downstream** (act-match / MSS@10)
+> para v2-**full** está **pendiente** — encodear la colección 1M con el checkpoint v2-full y correr
+> `eval_prelim`. Y el salto real de calidad sigue siendo la **Fase 2 (objetivo/codebook)**, no la
+> arquitectura.
 
 ## Reproducibilidad
 
-- **Entrenamiento v2:** notebook M2 [`03_train_contextual_v2_m2.ipynb`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/03_train_contextual_v2_m2.ipynb) (espejo del v1, `arch="v2"` vía `build_model`).
-- **Eval act-match:** [`eval_prelim.py`](../scripts/eval_prelim.py) (corpus 1m, `encode` + `metric`) — maneja v1 **y** v2.
-- **Curvas:** [`plot_v1_vs_v2.py`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/plot_v1_vs_v2.py).
+- **Entrenamiento:** [`03_train_contextual_v2_m2.ipynb`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/03_train_contextual_v2_m2.ipynb) (`CORPUS="full"`).
+- **Curvas:** [`plot_full_results.py`](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/plot_full_results.py).
+- **Act-match v1↔v2 (1m):** `eval_prelim.py` (`--phase encode/metric`).
