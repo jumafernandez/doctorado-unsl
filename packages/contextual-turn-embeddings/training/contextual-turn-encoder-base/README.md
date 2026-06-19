@@ -40,6 +40,25 @@ Modo de atención × escala de corpus:
 - Arquitectura: 768-d salida, `num_heads=8`, `max_turns=64`, speaker embeddings on; `num_layers=6`
   para los modelos full, `4` para los 1M. Detalle en [`config.yaml`](config.yaml).
 
+## Las tres versiones del modelo (v1 / v2 / v3)
+
+Eje **arquitectura** × eje **receta de entrenamiento**. Las tres se versionan; **ningún registro se
+pisa** (cada una en su carpeta `models/…-{v1,v2,v3}-…`; las notebooks tienen un guard anti-pisado).
+
+| Modelo | Arquitectura | Receta | Tamaño | Notebook |
+|---|---|---|---|---|
+| **v1** | custom (pre-LN + residual) | propia (`lr 2e-4`, AdamW uniforme) | 6 capas / 8 heads | `02` |
+| **v2** | **BERT-fiel** (post-LN) | **la del v1** (`lr 2e-4`, AdamW uniforme) | 6 capas / 8 heads | `03` |
+| **v3** | **BERT-base literal** | **la de BERT** (`lr 1e-4`, no-decay en bias/LN) | **12 capas / 12 heads / 3072** | `04` |
+
+- **v1 → v2** aísla la **arquitectura** (custom vs BERT-fiel; misma receta y tamaño).
+- **v2 → v3** suma la **receta de BERT** + el **tamaño BERT-base**: el "simil-BERT lo más fiel
+  posible", punto de partida para innovar (Fase 2: codebook).
+- En `config.json`, `arch` distingue solo **arquitectura** → v1=`"v1"`, **v2 y v3 = `"v2"`** (misma
+  estructura de módulos `BertTurn*`). Cada checkpoint anota `tag`/`recipe`/`n_layers` en `trainlog.jsonl`.
+- **v3 ≈ 87.5M params** = BERT-base (110M) **menos la tabla de embeddings de vocabulario (~23M)**: no
+  la tenemos porque la entrada es **continua** (turnos, no tokens). El stack Transformer es BERT-base exacto.
+
 ## Held-out (evaluación inductiva limpia)
 Para no contaminar el benchmark ANN, se **excluyen del entrenamiento** los diálogos cuyos turnos
 son *queries* del benchmark. [`heldout.py`](heldout.py) reproduce exactamente (semilla **42**) los
@@ -55,10 +74,13 @@ los `dialogue_id` correspondientes.
 2. **[`02_train_contextual_m2.ipynb`](02_train_contextual_m2.ipynb)** — en el **M2/MPS**: entrena
    AR y Bidi leyendo las bases vía **memmap** (`DialogueDataset(lazy=True)`; no entran en RAM),
    excluyendo el held-out. Guarda con `save_pretrained` (config.json + model.safetensors + log).
-3. **[`03_train_contextual_v2_m2.ipynb`](03_train_contextual_v2_m2.ipynb)** — **gemela del v2**
-   (BERT-fiel): idéntica a la 02 pero con `build_model(arch="v2")`. Para la **comparación controlada
-   v1 ↔ v2** (mismos datos/objetivo, solo cambia la arquitectura). Ver
-   [`docs/model/v2.md`](../../docs/model/v2.md) y `conversational-ann/results/v1_vs_v2_results.md`.
+3. **[`03_train_contextual_v2_m2.ipynb`](03_train_contextual_v2_m2.ipynb)** — **v2**: arquitectura
+   BERT-fiel (`build_model(arch="v2")`) con la **receta del v1** (`lr 2e-4`, 6 capas/8 heads). Ya
+   entrenado; queda como reproductor.
+4. **[`04_train_contextual_v3_m2.ipynb`](04_train_contextual_v3_m2.ipynb)** — **v3**: **BERT-base
+   literal** (12 capas/12 heads/3072) con la **receta de pretraining de BERT** (`lr 1e-4`, AdamW sin
+   weight decay en bias/LayerNorm). El punto de partida fiel desde el cual innovar. Ver
+   [`docs/model/v2.md`](../../docs/model/v2.md).
 
 ## Curvas de entrenamiento
 

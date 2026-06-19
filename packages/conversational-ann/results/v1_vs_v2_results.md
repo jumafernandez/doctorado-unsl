@@ -5,6 +5,11 @@ held-out (semilla 42), mismo objetivo, **mismo optimizador** (`lr=2e-4`), misma 
 cambia es la arquitectura** (v1 custom pre-LN + residual ↔ v2 BERT-fiel post-LN). v1 = 10 épocas, v2 = 15.
 
 > (La comparación previa en `1m` queda superada por esta, sobre todos los datos.)
+>
+> **Viene el v3** — BERT-base literal (12 capas/12 heads) con la receta de pretraining de BERT
+> (`lr 1e-4`, no-decay): el simil-BERT más fiel posible. Cuando termine de entrenar, `plot_full_results.py`
+> lo suma solo a estas curvas (v1/v2/v3). Ver el cuadro de las tres versiones en el
+> [model card](../../contextual-turn-embeddings/training/contextual-turn-encoder-base/README.md).
 
 ## Curvas
 
