@@ -85,7 +85,7 @@ los `dialogue_id` correspondientes.
    literal** (12 capas/12 heads/3072) con la **receta de pretraining de BERT** (`lr 1e-4`, AdamW sin
    weight decay en bias/LayerNorm). El punto de partida fiel desde el cual innovar. Ver
    [`docs/model/v2.md`](../../docs/model/v2.md). En M2 son ~2,5 h/época (12 capas).
-5. **[`05_train_contextual_v3_colab.ipynb`](05_train_contextual_v3_colab.ipynb)** — **v3 en Colab/GPU**:
+5. **[`05_train_contextual_v3_colab.ipynb`](05_train_contextual_v3_colab.ipynb)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/jumafernandez/doctorado-unsl/blob/main/packages/contextual-turn-embeddings/training/contextual-turn-encoder-base/05_train_contextual_v3_colab.ipynb) — **v3 en Colab/GPU**:
    gemela de la `04` para entrenar en GPU (horas, no días). Clona el repo, lee los datos desde **Drive**
    (`…/d2f-full/`, incl. `dialogs-2.0.pkl` para el held-out) y guarda los checkpoints en Drive.
 
