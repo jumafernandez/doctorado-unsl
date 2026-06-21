@@ -49,7 +49,7 @@ pisa** (cada una en su carpeta `models/…-{v1,v2,v3}-…`; las notebooks tienen
 |---|---|---|---|---|
 | **v1** | custom (pre-LN + residual) | propia (`lr 2e-4`, AdamW uniforme) | 6 capas / 8 heads | `02` |
 | **v2** | **BERT-fiel** (post-LN) | **la del v1** (`lr 2e-4`, AdamW uniforme) | 6 capas / 8 heads | `03` |
-| **v3** | **BERT-base literal** | **la de BERT** (`lr 1e-4`, no-decay en bias/LN) | **12 capas / 12 heads / 3072** | `04` |
+| **v3** | **BERT-base literal** | **la de BERT** (`lr 1e-4`, no-decay en bias/LN) | **12 capas / 12 heads / 3072** | `04` (M2) · `05` (GPU) |
 
 - **v1 → v2** aísla la **arquitectura** (custom vs BERT-fiel; misma receta y tamaño).
 - **v2 → v3** suma la **receta de BERT** + el **tamaño BERT-base**: el "simil-BERT lo más fiel
@@ -58,6 +58,10 @@ pisa** (cada una en su carpeta `models/…-{v1,v2,v3}-…`; las notebooks tienen
   estructura de módulos `BertTurn*`). Cada checkpoint anota `tag`/`recipe`/`n_layers` en `trainlog.jsonl`.
 - **v3 ≈ 87.5M params** = BERT-base (110M) **menos la tabla de embeddings de vocabulario (~23M)**: no
   la tenemos porque la entrada es **continua** (turnos, no tokens). El stack Transformer es BERT-base exacto.
+- **v3 se entrena igual en M2 ([`04`](04_train_contextual_v3_m2.ipynb)) o GPU/Colab
+  ([`05`](05_train_contextual_v3_colab.ipynb))** — mismo modelo y receta. En M2 son ~2,5 h/época (12
+  capas, impráctico para 30 épocas); en GPU, minutos. La `05` lee los datos desde Drive y guarda los
+  checkpoints ahí. Ambas tienen `EPOCHS=15` (suficiente: el LR anneala a 0 y `best/` cae antes).
 
 ## Held-out (evaluación inductiva limpia)
 Para no contaminar el benchmark ANN, se **excluyen del entrenamiento** los diálogos cuyos turnos
@@ -80,7 +84,10 @@ los `dialogue_id` correspondientes.
 4. **[`04_train_contextual_v3_m2.ipynb`](04_train_contextual_v3_m2.ipynb)** — **v3**: **BERT-base
    literal** (12 capas/12 heads/3072) con la **receta de pretraining de BERT** (`lr 1e-4`, AdamW sin
    weight decay en bias/LayerNorm). El punto de partida fiel desde el cual innovar. Ver
-   [`docs/model/v2.md`](../../docs/model/v2.md).
+   [`docs/model/v2.md`](../../docs/model/v2.md). En M2 son ~2,5 h/época (12 capas).
+5. **[`05_train_contextual_v3_colab.ipynb`](05_train_contextual_v3_colab.ipynb)** — **v3 en Colab/GPU**:
+   gemela de la `04` para entrenar en GPU (horas, no días). Clona el repo, lee los datos desde **Drive**
+   (`…/d2f-full/`, incl. `dialogs-2.0.pkl` para el held-out) y guarda los checkpoints en Drive.
 
 ## Curvas de entrenamiento — v1 (arquitectura custom)
 
