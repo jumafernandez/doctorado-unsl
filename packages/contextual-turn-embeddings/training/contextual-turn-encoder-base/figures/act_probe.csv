@@ -1,0 +1,14 @@
+rep,act_now_acc,act_now_f1,act_next_acc,act_next_f1
+Random (features),0.4433,0.0641,0.4384,0.0664
+SBERT-mpnet (genérico),0.8135,0.7282,0.6205,0.4611
+e_t (D2F),0.8958,0.8187,0.6629,0.5084
+Acumulativo,0.7142,0.6403,0.5949,0.4277
+EMA(0.6),0.9017,0.8556,0.6676,0.5213
+Contextual-AR (v1),0.9209,0.8848,0.7743,0.6592
+Contextual-AR (v2),0.8636,0.8033,0.8172,0.7317
+Contextual-AR (v3),0.9082,0.8647,0.7983,0.698
+Contextual-Bidi (v1),0.9281,0.8967,0.8506,0.7628
+Contextual-Bidi (v2),0.9022,0.8665,0.7536,0.688
+Contextual-Bidi (v3),0.8992,0.8545,0.7466,0.6639
+[trío] AR random-init,0.9111,0.8652,0.6744,0.5471
+[trío] v3-AR última-época,0.8594,0.7986,0.813,0.7251

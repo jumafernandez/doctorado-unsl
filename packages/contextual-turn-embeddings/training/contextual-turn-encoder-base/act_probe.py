@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""Probe estilo-Devlin: validar **captura de contexto** con una tarea downstream supervisada.
+
+NO medimos retrieval (BERT no es para eso). Medimos si la representación contextual `h_t` predice
+**dialogue-act** mejor que el embedding por-turno `e_t` — un probe lineal congelado (LogisticRegression).
+
+Dos tareas (main_acts, 10 clases):
+- **act(t)**  — el acto del turno actual. Control: vive en `e_t` (D2F ya es act-aware) → `h_t ≈ e_t`.
+- **act(t+1)** — el acto del PRÓXIMO turno. **Necesita contexto/trayectoria** → si `h_t > e_t`, ahí está
+  la captura de contexto, medida como corresponde (sobre todo el modo AR/causal).
+
+Verificación (trío, responde "¿está bien entrenado?"):
+- trained vs **random-init** (mismo arch, sin entrenar) → ¿el entrenamiento aportó?
+- **best/** vs **última época** → ¿el overfit de la curva degrada la rep, o el best/ lo esquiva?
+
+    python act_probe.py --dialogues 4000
+"""
+import argparse
+import dataclasses
+import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import train_test_split
+
+PKG = Path(__file__).resolve().parent.parent.parent
+MODELS = PKG / "models"
+ANN = Path("~/Documents/GitHub/ANN-UNSL").expanduser()
+N = "contextual-turn-encoder-base"
+
+
+def first_label(x):
+    if isinstance(x, (list, tuple, np.ndarray)) and len(x):
+        return str(x[0])
+    return None
+
+
+def load_model(ckpt):
+    from contextual_turn_embeddings import ContextualTurnModel, ContextualTurnModelV2
+    arch = json.loads((ckpt / "config.json").read_text()).get("arch", "v1")
+    M = ContextualTurnModelV2 if arch == "v2" else ContextualTurnModel
+    return M.from_pretrained(str(ckpt))
+
+
+def random_like(ckpt):
+    from contextual_turn_embeddings import ModelConfig, build_model
+    fields = {f.name for f in dataclasses.fields(ModelConfig)}
+    d = json.loads((ckpt / "config.json").read_text())
+    return build_model(ModelConfig(**{k: v for k, v in d.items() if k in fields}))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dialogues", type=int, default=4000)
+    ap.add_argument("--device", default="mps")
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--no-sbert", action="store_true", help="no incluir el baseline SBERT genérico")
+    args = ap.parse_args()
+    from contextual_turn_embeddings import encode_dialogues
+
+    df = pd.read_pickle(ANN / "data/dialogs-2.0.pkl")[
+        ["dialogue_id", "turn_id", "speaker", "utterance", "main_acts"]].copy()
+    emb = np.load(ANN / "data/embeddings_dialog2flow.npy", mmap_mode="r")
+
+    rng = np.random.default_rng(args.seed)
+    dids = pd.unique(df["dialogue_id"])
+    keep = set(rng.choice(dids, size=min(args.dialogues, len(dids)), replace=False))
+    sub = df[df["dialogue_id"].isin(keep)].sort_values(["dialogue_id", "turn_id"]).reset_index()
+    e = np.asarray(emb[sub["index"].to_numpy()], dtype=np.float32)     # e_t alineado con sub
+    sub = sub.reset_index(drop=True)
+    sub["row_id"] = np.arange(len(sub))
+
+    # labels act(t) y act(t+1) (mismo diálogo)
+    y_now = sub["main_acts"].map(first_label).to_numpy()
+    same = (sub["dialogue_id"].shift(-1) == sub["dialogue_id"]).to_numpy()
+    y_next = np.where(same, np.roll(y_now, -1), None)
+
+    groups = [g.index.to_numpy() for _, g in sub.groupby("dialogue_id", sort=False)]
+
+    def ema(alpha=0.6):
+        h = np.zeros_like(e)
+        for pos in groups:
+            prev = e[pos[0]]
+            for k, p in enumerate(pos):
+                prev = e[p] if k == 0 else alpha * e[p] + (1 - alpha) * prev
+                h[p] = prev
+        return h
+
+    def cumulative():
+        h = np.zeros_like(e)
+        for pos in groups:
+            h[pos] = np.cumsum(e[pos], 0) / np.arange(1, len(pos) + 1)[:, None]
+        return h
+
+    def encode(model):
+        H, meta = encode_dialogues(model, sub, embeddings=e, device=args.device, batch_dialogues=32)
+        out = np.zeros_like(e)
+        out[meta["row_id"].to_numpy()] = np.asarray(H)         # re-alineado a orden de sub
+        return out
+
+    # === escalera de baselines (cada peldaño aísla una contribución) ===
+    reps = {"Random (features)": np.random.default_rng(1).standard_normal(e.shape).astype(np.float32)}
+    if not args.no_sbert:                                    # peldaño "no de diálogo, no de turnos"
+        from sentence_transformers import SentenceTransformer
+        st = SentenceTransformer("all-mpnet-base-v2", device=args.device)
+        reps["SBERT-mpnet (genérico)"] = st.encode(
+            sub["utterance"].fillna("").to_list(), batch_size=64, show_progress_bar=False).astype(np.float32)
+    reps["e_t (D2F)"] = e                                    # per-turno, de diálogo, SIN contexto de turno
+    reps["Acumulativo"] = cumulative()                       # contexto hecho a mano
+    reps["EMA(0.6)"] = ema()
+    ck = lambda rel: MODELS / rel
+    for nm, rel in [("Contextual-AR (v1)", f"{N}-ar-full/best"), ("Contextual-AR (v2)", f"{N}-v2-ar-full/best"),
+                    ("Contextual-AR (v3)", f"{N}-v3-ar-full/best"), ("Contextual-Bidi (v1)", f"{N}-bidi-full/best"),
+                    ("Contextual-Bidi (v2)", f"{N}-v2-bidi-full/best"), ("Contextual-Bidi (v3)", f"{N}-v3-bidi-full/best")]:
+        if (ck(rel) / "config.json").exists():
+            reps[nm] = encode(load_model(ck(rel)))
+    # trío de verificación
+    rnd = ck(f"{N}-v2-ar-full/best")
+    if rnd.exists():
+        reps["[trío] AR random-init"] = encode(random_like(rnd))          # sin entrenar
+    v3 = ck(f"{N}-v3-ar-full")                                            # best=ep5, root=última (ep13, overfit)
+    if (v3 / "model.safetensors").exists():
+        reps["[trío] v3-AR última-época"] = encode(load_model(v3))
+
+    # probe lineal (con StandardScaler -> converge bien)
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+
+    def probe(X, y):
+        m = y != None  # noqa: E711
+        X, y = X[m], y[m].astype(str)
+        Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+        clf = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000, n_jobs=-1)).fit(Xtr, ytr)
+        p = clf.predict(Xte)
+        return accuracy_score(yte, p), f1_score(yte, p, average="macro")
+
+    print(f"muestra: {len(sub)} turnos / {len(keep)} diálogos | clases act: {len(set(y_now[y_now!=None]))}\n")
+    print(f"{'representación':28s} {'act(t) acc/F1':>16s}   {'act(t+1) acc/F1':>16s}")
+    rows = []
+    for nm, X in reps.items():
+        an, fn = probe(X, y_now)
+        ax, fx = probe(X, y_next)
+        print(f"{nm:28s}   {an:.3f}/{fn:.3f}        {ax:.3f}/{fx:.3f}")
+        rows.append({"rep": nm, "act_now_acc": round(an, 4), "act_now_f1": round(fn, 4),
+                     "act_next_acc": round(ax, 4), "act_next_f1": round(fx, 4)})
+    out = Path(__file__).parent / "figures" / "act_probe.csv"
+    pd.DataFrame(rows).to_csv(out, index=False)
+    print(f"\nescrito: {out}")
+    print("Lectura: act(t+1) es la prueba de contexto — si h_t > e_t ahí, captura trayectoria.")
+
+
+if __name__ == "__main__":
+    main()

@@ -191,11 +191,13 @@ def rep_specs(corpus):
     ema = ANN / "data" / "ema_embeddings_dialog2flow_alpha_0_6.npy"
     if ema.exists():
         specs.append(("ema_alpha_0_6", lambda: np.load(ema, mmap_mode="r")))
-    for short, full in [("Contextual-AR", f"contextual-turn-encoder-base-ar-{corpus}"),
-                        ("Contextual-Bidi", f"contextual-turn-encoder-base-bidi-{corpus}")]:
-        p = REPS_DIR / f"{full}_N1000023.npy"
-        if p.exists():
-            specs.append((short, lambda p=p: np.load(p, mmap_mode="r")))
+    # v1 (sin sufijo, mantiene el cache viejo) / v2 / v3 × AR/Bidi — cada uno si existen sus reps
+    for ver, tag in [("", ""), ("v2-", "-v2"), ("v3-", "-v3")]:
+        for mode, label in [("ar", "AR"), ("bidi", "Bidi")]:
+            full = f"contextual-turn-encoder-base-{ver}{mode}-{corpus}"
+            p = REPS_DIR / f"{full}_N1000023.npy"
+            if p.exists():
+                specs.append((f"Contextual-{label}{tag}", lambda p=p: np.load(p, mmap_mode="r")))
     return specs
 
 
@@ -247,25 +249,28 @@ def main():
         done = set()
         if jpath.exists():
             done = {json.loads(l)["query_row"] for l in jpath.read_text().splitlines() if l.strip()}
-        log(f"[{short}] retrieval exacto ...")
-        rep = load()
-        neighbors = retrieve(rep, index_idx, query_rows, dialogue_of_row)
-        del rep
-        log(f"[{short}] juzgando {len(query_rows)} queries (ya: {len(done)}) ...")
-        for qi, qrow in enumerate(query_rows):
-            if int(qrow) in done:
-                continue
-            nb = neighbors[int(qrow)]
-            try:
-                evs = judge(client, situation(qrow), [situation(r) for r in nb])
-            except Exception as e:
-                log(f"  error q{qi} ({qrow}): {e!r}"); time.sleep(2); continue
-            rec = {"variant": short, "query_row": int(qrow), "neighbors": nb, "evaluations": evs}
-            with open(jpath, "a") as f:
-                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-            time.sleep(SLEEP)
-            if (qi + 1) % 20 == 0:
-                log(f"  {short}: {qi+1}/{len(query_rows)}")
+        if len(done) >= len(query_rows):
+            log(f"[{short}] ya completo ({len(done)}/{len(query_rows)}), salteo retrieval.")
+        else:
+            log(f"[{short}] retrieval exacto ...")
+            rep = load()
+            neighbors = retrieve(rep, index_idx, query_rows, dialogue_of_row)
+            del rep
+            log(f"[{short}] juzgando {len(query_rows)} queries (ya: {len(done)}) ...")
+            for qi, qrow in enumerate(query_rows):
+                if int(qrow) in done:
+                    continue
+                nb = neighbors[int(qrow)]
+                try:
+                    evs = judge(client, situation(qrow), [situation(r) for r in nb])
+                except Exception as e:
+                    log(f"  error q{qi} ({qrow}): {e!r}"); time.sleep(2); continue
+                rec = {"variant": short, "query_row": int(qrow), "neighbors": nb, "evaluations": evs}
+                with open(jpath, "a") as f:
+                    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                time.sleep(SLEEP)
+                if (qi + 1) % 20 == 0:
+                    log(f"  {short}: {qi+1}/{len(query_rows)}")
         # MSS@10 = media de overall_similarity
         recs = [json.loads(l) for l in jpath.read_text().splitlines() if l.strip()]
         per_q = [np.mean([e["overall_similarity"] for e in r["evaluations"]]) for r in recs]
