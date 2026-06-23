@@ -63,9 +63,49 @@ SBERT o D2F empardaran a `f2`, **la tesis se cae** (sería el encoder, no el con
   (ni genérico ni de diálogo) ni la memoria a mano logran. Es **el ingrediente nuevo**, validado contra la
   escalera completa. *(Controles en `act_probe.py`: trained-vs-random-init, best-vs-última-época.)*
 
+## Validación inductiva (held-out — sin contaminación train/eval)
+
+El probe de arriba es **transductivo**: muestrea de la colección 1M, que `f2` **vio** en su entrenamiento
+auto-supervisado (las **etiquetas de acto nunca** se usaron —eso es seguro— pero el **contenido** de esos
+diálogos sí). Para descartar memorización —en especial del AR, cuyo objetivo *next-turn* se parece a la
+tarea *next-act*— re-corrimos sobre el **held-out**: los **17.362 diálogos EXCLUIDOS del training**
+(semilla 42, `heldout.py`), que el modelo **nunca vio** (`--heldout`).
+
+| representación | **act(t+1) held-out** acc/F1 |
+|---|---|
+| Random | 0.421 / 0.060 |
+| Acumulativo | 0.577 / 0.458 |
+| SBERT genérico (sin contexto) | 0.623 / 0.511 |
+| **TOD-BERT** (otro modelo **con contexto**, externo) | **0.676 / 0.572** |
+| **D2F (`e_t`)** | **0.679 / 0.567** |
+| EMA(0.6) | 0.685 / 0.582 |
+| **Contextual-AR (v2)** | **0.792 / 0.706** |
+| Contextual-AR (v3) | 0.788 / 0.689 |
+| Contextual-Bidi (v1) | 0.869 / 0.811 \* leakage |
+
+**Veredicto — la brecha se sostiene:**
+- **Los baselines no se mueven** vs transductivo (±0.01–0.02, ruido de muestreo) → no tienen memoria y el
+  held-out **no es más difícil**. Setup sano.
+- **Nuestros modelos aguantan:** el **AR-v2 baja solo 0.026** (0.817→0.792) —el más expuesto— pero **igual
+  le saca +0.11 a D2F/EMA sobre datos no vistos** (+0.12 en macro-F1).
+- **Conclusión:** había una **pizca** de memorización en el transductivo del AR (~0.026, real), pero el
+  grueso del +0.11 es **generalización**. El resultado es **inductivo y robusto.**
+- **TOD-BERT (otro modelo CON contexto, externo): NO nos alcanza.** Queda en **0.676**, **al nivel de D2F**
+  y muy por debajo de nuestro `f2`-AR (~0.79). O sea: **tener contexto no alcanza** — lo que importa es haber
+  **aprendido la estructura de trayectoria de actos** de esta distribución, que es lo que hace `f2`.
+  *Caveat honesto:* TOD-BERT no se construye sobre `e_t` (usa el texto crudo) → es un act-encoder más flojo
+  de base (su `act(t)`=0.83 < 0.90 de D2F), así que parte de la desventaja es esa. La ablación más limpia
+  ("¿es nuestro transformer o sirve cualquier contexto aprendido sobre `e_t`?") sería un **LSTM/GRU sobre
+  `e_t`** (mismo base, otra arquitectura) — queda anotada para el paper.
+
 ## Reproducir
 
 ```bash
-python training/contextual-turn-encoder-base/act_probe.py --dialogues 4000   # --no-sbert para saltear el download
+# transductivo (toda la colección):
+python training/contextual-turn-encoder-base/act_probe.py --dialogues 4000
+# inductivo (solo held-out, sin contaminación) + baseline externo TOD-BERT:
+python training/contextual-turn-encoder-base/act_probe.py --dialogues 4000 --heldout --todbert
 ```
-Salida: `figures/act_probe.csv`. Código: [`act_probe.py`](act_probe.py).
+Flags: `--no-sbert` saltea el download de SBERT · `--heldout` evalúa solo sobre lo no-visto · `--todbert`
+suma el baseline externo. Salidas: `figures/act_probe.csv` (transductivo) y `act_probe_heldout.csv`.
+Código: [`act_probe.py`](act_probe.py).

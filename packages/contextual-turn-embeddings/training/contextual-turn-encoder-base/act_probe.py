@@ -52,12 +52,44 @@ def random_like(ckpt):
     return build_model(ModelConfig(**{k: v for k, v in d.items() if k in fields}))
 
 
+def encode_todbert(sub, groups, device, window=5, batch=16, maxlen=256):
+    """Baseline context-aware EXTERNO: TOD-BERT (Wu et al. 2020) sobre el historial de turnos.
+    Para cada turno t, arma el contexto = últimos `window` turnos con tokens [USR]/[SYS] y saca el CLS."""
+    import torch
+    from transformers import AutoModel, AutoTokenizer
+    name = "TODBERT/TOD-BERT-JNT-V1"
+    tok = AutoTokenizer.from_pretrained(name)
+    miss = [t for t in ["[USR]", "[SYS]"] if tok.convert_tokens_to_ids(t) == tok.unk_token_id]
+    model = AutoModel.from_pretrained(name)
+    if miss:                                                 # TOD-BERT ya los trae; fallback defensivo
+        tok.add_special_tokens({"additional_special_tokens": miss})
+        model.resize_token_embeddings(len(tok))
+    model = model.to(device).eval()
+    spk = sub["speaker"].to_numpy()
+    utt = sub["utterance"].fillna("").astype(str).to_numpy()
+    ctx = [""] * len(sub)
+    for pos in groups:
+        for j, p in enumerate(pos):
+            s = max(0, j - window + 1)
+            ctx[p] = " ".join(("[SYS] " if spk[q] == "system" else "[USR] ") + utt[q] for q in pos[s:j + 1])
+    out = np.zeros((len(sub), model.config.hidden_size), dtype=np.float32)
+    with torch.no_grad():
+        for i in range(0, len(sub), batch):
+            enc = tok(ctx[i:i + batch], padding=True, truncation=True, max_length=maxlen,
+                      return_tensors="pt").to(device)
+            out[i:i + batch] = model(**enc).last_hidden_state[:, 0].cpu().numpy()   # CLS = rep del contexto
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dialogues", type=int, default=4000)
     ap.add_argument("--device", default="mps")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--no-sbert", action="store_true", help="no incluir el baseline SBERT genérico")
+    ap.add_argument("--heldout", action="store_true",
+                    help="evaluar SOLO sobre held-out: diálogos EXCLUIDOS del training (inductivo, sin contaminación)")
+    ap.add_argument("--todbert", action="store_true", help="sumar el baseline context-aware externo TOD-BERT")
     args = ap.parse_args()
     from contextual_turn_embeddings import encode_dialogues
 
@@ -67,6 +99,13 @@ def main():
 
     rng = np.random.default_rng(args.seed)
     dids = pd.unique(df["dialogue_id"])
+    if args.heldout:                                          # solo diálogos NUNCA vistos en el training
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import heldout as H
+        ho = set(H.heldout_dialogue_ids(df))
+        dids = np.array([d for d in dids if d in ho])
+        print(f"[HELD-OUT / inductivo] {len(dids)} diálogos excluidos del training")
     keep = set(rng.choice(dids, size=min(args.dialogues, len(dids)), replace=False))
     sub = df[df["dialogue_id"].isin(keep)].sort_values(["dialogue_id", "turn_id"]).reset_index()
     e = np.asarray(emb[sub["index"].to_numpy()], dtype=np.float32)     # e_t alineado con sub
@@ -111,6 +150,8 @@ def main():
     reps["e_t (D2F)"] = e                                    # per-turno, de diálogo, SIN contexto de turno
     reps["Acumulativo"] = cumulative()                       # contexto hecho a mano
     reps["EMA(0.6)"] = ema()
+    if args.todbert:                                         # contexto APRENDIDO externo (no nuestro)
+        reps["TOD-BERT (contexto)"] = encode_todbert(sub, groups, args.device)
     ck = lambda rel: MODELS / rel
     for nm, rel in [("Contextual-AR (v1)", f"{N}-ar-full/best"), ("Contextual-AR (v2)", f"{N}-v2-ar-full/best"),
                     ("Contextual-AR (v3)", f"{N}-v3-ar-full/best"), ("Contextual-Bidi (v1)", f"{N}-bidi-full/best"),
@@ -146,7 +187,7 @@ def main():
         print(f"{nm:28s}   {an:.3f}/{fn:.3f}        {ax:.3f}/{fx:.3f}")
         rows.append({"rep": nm, "act_now_acc": round(an, 4), "act_now_f1": round(fn, 4),
                      "act_next_acc": round(ax, 4), "act_next_f1": round(fx, 4)})
-    out = Path(__file__).parent / "figures" / "act_probe.csv"
+    out = Path(__file__).parent / "figures" / ("act_probe_heldout.csv" if args.heldout else "act_probe.csv")
     pd.DataFrame(rows).to_csv(out, index=False)
     print(f"\nescrito: {out}")
     print("Lectura: act(t+1) es la prueba de contexto — si h_t > e_t ahí, captura trayectoria.")
