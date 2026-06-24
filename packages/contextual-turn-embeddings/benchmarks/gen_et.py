@@ -2,7 +2,7 @@
 """Genera `e_t` para una colección, con **base intercambiable** (la arquitectura de f2 es agnóstica a
 la base). Alineado por posición de fila con el pkl.
 
-- Bases SentenceTransformer (`d2f`/`mpnet`/`minilm`): receta de `nb01b/c` — `.encode(batch=64,
+- Bases SentenceTransformer (`d2f`/`mpnet`): receta de `nb01b/c` — `.encode(batch=64,
   convert_to_numpy=True)` **SIN** `normalize`. El `e_t` de eval queda en el MISMO espacio que el de train.
 - Base `todbert`: TOD-BERT (`AutoModel` + CLS) sobre **UN solo turno** (`[USR/SYS] utterance`, sin
   historial) = TOD-BERT usado como **encoder de turno**; su contexto lo agrega f2 después. 768-d. Esto
@@ -22,7 +22,6 @@ ANN = Path("~/Documents/GitHub/ANN-UNSL").expanduser()
 BASES = {                                                  # encoders SentenceTransformer (frozen, pretrained)
     "d2f": "sergioburdisso/dialog2flow-joint-bert-base",   # 768, act-tuned
     "mpnet": "sentence-transformers/all-mpnet-base-v2",     # 768, genérico
-    "minilm": "sentence-transformers/all-MiniLM-L6-v2",     # 384, genérico chico
 }
 TODBERT = "TODBERT/TOD-BERT-JNT-V1"                         # 768, TOD context-aware (acá: single-turn)
 
@@ -59,7 +58,7 @@ def main():
     ap.add_argument("--name", default=None, help="ANN/data/<name>_dialogs.pkl -> <name>[_<base>]_e_t.npy")
     ap.add_argument("--data", default=None, help="pkl explícito (override de --name; p.ej. la colección de train)")
     ap.add_argument("--out", default=None, help="npy de salida explícito (override del nombre derivado)")
-    ap.add_argument("--base", default="d2f", help="d2f|mpnet|minilm|todbert o un model_id de HF")
+    ap.add_argument("--base", default="d2f", help="d2f|mpnet|todbert o un model_id de HF")
     ap.add_argument("--normalize", action="store_true", help="L2-normalize (default off; ignorado por todbert)")
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--device", default=None, help="cuda|mps|cpu (default: auto)")

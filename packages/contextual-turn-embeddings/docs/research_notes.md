@@ -113,9 +113,9 @@ haga ninguna de esas dos cosas todavía.
 agnóstica a la base**. La entrada `e_t` puede ser **cualquier** embedding por-turno, y la
 arquitectura **se adapta a su dimensión** — no está atada a 768:
 
-- `input_dim` se **auto-detecta** del shape de la base (768 con D2F/mpnet, 384 con MiniLM); el
-  `input_proj` y la convención `D_out == D_in` (§5) absorben el cambio de dimensión sin tocar el
-  modelo. Una sola arquitectura, cualquier encoder de turno.
+- `input_dim` se **auto-detecta** del shape de la base (768 con D2F/mpnet/TOD-BERT); el `input_proj`
+  y la convención `D_out == D_in` (§5) absorben **cualquier** dimensión sin tocar el modelo. Una sola
+  arquitectura, cualquier encoder de turno.
 - Esto reencuadra el aporte: de **"un modelo sobre D2F"** (point-solution) a **"un método de
   contextualización de turnos TOD"** que se *instancia* sobre la base que convenga. Y **desacopla
   `f2` de D2F**: D2F deja de ser una muleta y pasa a ser **la mejor base entre varias** (se construye
@@ -124,7 +124,7 @@ arquitectura **se adapta a su dimensión** — no está atada a 768:
 **Experimentos que lo explotan** (resultados en
 [`benchmarks/benchmark_context.md`](../benchmarks/benchmark_context.md)):
 
-- **Fase A — agnóstico a la base:** entrenar `f2` sobre `mpnet` (768) y `MiniLM` (384) además de D2F;
+- **Fase A — agnóstico a la base:** entrenar `f2` sobre `mpnet` (768, encoder genérico) además de D2F;
   si el salto de trayectoria (`act(t+1)`) sobrevive el cambio de base, la capa es transferible entre
   encoders. Scripts: [`training/.../train_base.py`](../training/contextual-turn-encoder-base/train_base.py)
   + [`benchmarks/gen_et.py`](../benchmarks/gen_et.py) (`--base`).

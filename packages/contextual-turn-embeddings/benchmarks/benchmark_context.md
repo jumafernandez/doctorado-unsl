@@ -107,36 +107,36 @@ datasets = un **subconjunto de los 20 de D2F**. Los **7 que f2 no vio** (D2F's 2
 **estandarizados en nuestra taxonomía de actos** → cero mapeo de etiquetas. Es un leave-one-dataset-out que
 el split nos regaló.
 
-- **Taskmaster (1/2/3) quedó afuera:** en la estandarización de D2F el **100% de sus turnos es `'inform'`**
-  (trae anotación de API/slots, no actos de diálogo) → sin variedad de actos, el probe no aplica.
-- **SimJoint (M2M, Shah 2018) — Movie+Restaurant, 9 clases — es el vehículo.** Y es **más limpio que
-  Taskmaster**: M2M **no está** en los 9 datasets de TOD-BERT, así que en SimJoint **f2 y TOD-BERT juegan
-  los dos de visitante**; el único "local" es la base `e_t`/D2F (simétrica). Comparación apples-to-apples.
+- **SimJoint (M2M, Shah 2018) — Movie+Restaurant, 9 clases — es el vehículo.** Tiene variedad de actos en
+  nuestra taxonomía (candidatos con anotación degenerada —una sola clase de acto— quedan afuera). Y es
+  **más limpio** que un dataset in-domain: M2M **no está** en los 9 datasets de TOD-BERT, así que en
+  SimJoint **f2 y TOD-BERT juegan los dos de visitante**; el único "local" es la base `e_t`/D2F (simétrica).
+  Comparación apples-to-apples.
 
-**Resultado (SimJoint, ~25k turnos / 3k diálogos · transferencia) — act(t+1) F1, AR limpio:**
+> **⚠️ Corrección de integridad (2026-06-24).** La colección **full** (19 datasets) **incluye SimJoint** →
+> los checkpoints **full** (`*-v2-ar-full`, v3, Bidi) **vieron SimJoint en el entrenamiento**. Sus números
+> sobre SimJoint son **transductivos, NO transferencia** — incluido el **0.721** que figuraba acá como
+> headline. La transferencia **válida** son los modelos **1m** (13 datasets, **sin** SimJoint), abajo y en
+> la sección «Base configurable». **No usar el 0.721 como número de transferencia.**
 
-| representación (en SimJoint) | act(t) F1 | **act(t+1) F1** | juega de |
-|---|--:|--:|---|
-| `e_t` (D2F) — la base | 0.961 | 0.518 | local |
-| EMA(0.6) | 0.968 | 0.517 | — |
-| SBERT-mpnet (genérico) | 0.930 | 0.502 | — |
-| **TOD-BERT (contexto)** | 0.867 | **0.493** | **visitante** |
-| **Contextual-AR (v2) = f2** | 0.956 | **0.721** | **visitante** |
-| Contextual-AR (v3) | 0.976 | 0.654 | visitante |
-| [trío] AR random-init | 0.974 | 0.536 | — |
-| Contextual-Bidi (v1) | 0.985 | 0.893 \* leakage | visitante |
+**Transferencia válida (modelos 1m, f2 nunca vio SimJoint) — act(t+1) F1, AR limpio:**
 
-**Veredicto:**
-- Sobre datos que **f2 nunca vio**, el AR limpio saca **0.72** en next-act vs **0.49 de TOD-BERT** y **0.52
-  de D2F/EMA** → **+0.20 F1**. La contextualización de trayectoria **transfiere**; no era memorización de casa.
-- **Le ganamos a TOD-BERT en su partido de visitante** (los dos fuera de su distribución de entrenamiento)
-  → la ventaja no es "vimos estos datos", es la **estructura de trayectoria aprendida**.
-- **Control:** `act(t)` parejo y alto (~0.96, f2 no pierde el acto actual); **random-init 0.54 ≈ D2F** → el
-  salto a 0.72 es **el entrenamiento**, no la arquitectura.
-- **Caveat honesto:** SimJoint es **sintético** (self-play máquina-máquina) → trayectorias de actos más
-  regulares; el gap (+0.20) es **mayor** que el in-domain held-out (+0.11), probablemente por esa
-  regularidad. La **dirección y robustez** son sólidas; la **magnitud** hay que tomarla con pinzas hasta un
-  human-human externo (tier-2: STAR/SIMMC, fuera de la taxonomía → requiere mapeo de actos).
+| representación (SimJoint, 1m) | act(t+1) F1 | juega de |
+|---|--:|---|
+| `e_t` (D2F) — la base | 0.518 | — |
+| EMA(0.6) | 0.517 | — |
+| **TOD-BERT (su propio contexto)** | **0.491** | visitante |
+| [trío] AR random-init (sin entrenar) | 0.536 | — |
+| **f2(D2F)-1m** | **0.564** | **visitante** |
+
+**Veredicto (corregido):**
+- f2 sobre datos que **nunca vio**: **0.564** vs `e_t` 0.518 / TOD-BERT 0.491 / EMA 0.517 → **+0.04–0.07**.
+  La trayectoria **transfiere**, pero el efecto a 1m es **modesto** — el +0.20 anterior era **transductivo**.
+- **random-init 0.536 ≈ `e_t`** → el salto es el **entrenamiento**, no la arquitectura. Control sano.
+- Sigue valiendo que **le ganamos a TOD-BERT** (0.564 vs 0.491; head-to-head limpio en la ablación: f2(TOD-BERT)
+  0.546 vs TOD-BERT-nativo 0.491).
+- **Transferencia a full válida = PENDIENTE:** requiere **re-entrenar f2 excluyendo SimJoint** (leave-SimJoint-out);
+  el `v2-ar-full` actual **no sirve** (lo vio). + caveat de que SimJoint es **sintético** (self-play).
 
 ## Base configurable — ablación de f1 (preliminar, escala 1m)
 
@@ -155,18 +155,20 @@ re-entrena **solo f2** (un f2 por base — los pesos quedan atados al espacio de
 | base = **TOD-BERT** (1-turno) · `e_t` | 0.946 | 0.508 |
 | base = **TOD-BERT** · **f2(TOD-BERT)** | 0.932 | **0.546** |
 | TOD-BERT con su **propio** contexto (vent. 5) | 0.867 | 0.491 |
-| *ref — f2(D2F) **full** (~4h)* | *0.956* | *0.721* |
+| *f2(D2F) full — ⚠️ **transductivo** (vio SimJoint), NO transfer* | *0.956* | *0.721* |
 
 Tres comparaciones, cada una responde otra pregunta:
 - **B · base-agnóstico:** dentro de cada base, f2 > `e_t` por **+0.04–0.046** (parejo en las 3, también > EMA)
   → la contextualización es del **método**, no de D2F.
 - **C · head-to-head limpio:** f2(TOD-BERT) **0.546** > TOD-BERT-nativo **0.491** (+0.055) → con la base
   constante, el contexto de f2 supera al de TOD-BERT (cuyo contexto de ventana incluso *empeora* su turno aislado).
-- **A · f2 vs TOD-BERT como producto:** f2(D2F) 0.564 vs TOD-BERT-nativo 0.491 (+0.073); a full, 0.721 vs 0.491
-  (+0.23). Mezcla base + mecanismo (por eso C lo aísla).
+- **A · f2 vs TOD-BERT como producto:** f2(D2F) 0.564 vs TOD-BERT-nativo 0.491 (**+0.073, 1m válido**). Mezcla
+  base + mecanismo (por eso C lo aísla). *(El "+0.23 a full" que figuraba antes era **transductivo** — full vio SimJoint.)*
 
-**Caveats:** (1) **escala** — esto es 1m; el mismo f2(D2F) sube 0.564→**0.721** a full → estos números son
-**piso/dirección, no magnitud** (full de las 3 bases: pendiente). (2) `act(t+1)` tiene **techo intrínseco**
+**Caveats:** (1) **contaminación del full** — la escala 1m es **válida** (los 13 datasets **no** incluyen
+SimJoint). El `*-v2-ar-full` da 0.721 pero **vio SimJoint** (la colección full lo incluye) → **transductivo,
+no comparable** como transfer. Una transferencia a full válida necesita **re-entrenar excluyendo SimJoint**
+(leave-SimJoint-out, pendiente). (2) `act(t+1)` tiene **techo intrínseco**
 (es forecasting, no read-off; el Bidi *con leakage* solo llega a 0.89 → ruido de etiqueta + entropía de la
 tarea) → leer los Δ contra el headroom alcanzable (~0.52 piso → ~0.72 techo limpio), no contra 1.0.
 CSVs: `figures/act_probe_simjoint_{d2f,mpnet,todbert}.csv`.
@@ -186,7 +188,7 @@ python benchmarks/act_probe.py --tag simjoint --todbert \
   --data  ~/Documents/GitHub/ANN-UNSL/data/simjoint_dialogs.pkl \
   --embeddings ~/Documents/GitHub/ANN-UNSL/data/simjoint_e_t.npy
 
-# base configurable: f2 sobre otra f1 (mpnet | minilm | todbert). Ej: TOD-BERT single-turn (1m)
+# base configurable: f2 sobre otra f1 (mpnet | todbert). Ej: TOD-BERT single-turn (1m)
 D=~/Documents/GitHub/ANN-UNSL/data
 python benchmarks/gen_et.py --data $D/dialogs-2.0.pkl --base todbert --out $D/embeddings_todbert.npy
 python training/contextual-turn-encoder-base/train_base.py --base todbert --mode autoregressive --epochs 8

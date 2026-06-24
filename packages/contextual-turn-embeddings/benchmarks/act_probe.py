@@ -95,7 +95,7 @@ def main():
                     help="pkl de diálogos (default: in-domain dialogs-2.0). Transferencia: ANN/data/<name>_dialogs.pkl")
     ap.add_argument("--embeddings", default=None,
                     help="npy de e_t alineado por fila (default: in-domain). Generado por gen_et.py para transferencia")
-    ap.add_argument("--tag", default=None, help="sufijo del csv de salida (p.ej. taskmaster)")
+    ap.add_argument("--tag", default=None, help="sufijo del csv de salida (p.ej. simjoint)")
     ap.add_argument("--model", action="append", default=[], metavar="LABEL=relpath",
                     help="checkpoint f2 arbitrario bajo models/ (repetible). Ej: 'f2-mpnet-AR=...-mpnet-v2-ar-1m/best'")
     ap.add_argument("--no-default-models", action="store_true",
@@ -203,7 +203,7 @@ def main():
     if n_cls < 2:
         import sys
         sys.exit(f"⚠️ solo {n_cls} clase(s) de acto acá → el probe no aplica: anotación de actos "
-                 f"degenerada (p.ej. Taskmaster en D2F = todo 'inform'). Elegí otro dataset.")
+                 f"degenerada (una sola clase de acto). Elegí otro dataset.")
     print(f"muestra: {len(sub)} turnos / {len(keep)} diálogos | clases act: {n_cls}\n")
     print(f"{'representación':28s} {'act(t) acc/F1':>16s}   {'act(t+1) acc/F1':>16s}")
     rows = []

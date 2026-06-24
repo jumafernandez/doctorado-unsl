@@ -7,7 +7,7 @@ de f2 es agnóstica a la base). Escala = **1m** (`dialogs-2.0.pkl` + `embeddings
 held-out reproducible (semilla 42). Aísla: ¿el salto de trayectoria depende de D2F o sobrevive el cambio de base?
 
     python train_base.py --base mpnet            # AR, 8 épocas, 1m
-    python train_base.py --base minilm --epochs 8
+    python train_base.py --base todbert --epochs 8
 """
 import argparse
 import json
@@ -31,7 +31,7 @@ from contextual_turn_embeddings import (Config, DialogueDataset, EmbeddingRetrie
 from contextual_turn_embeddings.train import build_linear_warmup_scheduler  # noqa: E402
 
 BASE_EMB = {"d2f": "embeddings_dialog2flow.npy", "mpnet": "embeddings_mpnet.npy",
-            "minilm": "embeddings_minilm.npy", "todbert": "embeddings_todbert.npy"}
+            "todbert": "embeddings_todbert.npy"}
 
 
 def train_variant(df_train, emb_memmap, base_cfg, mode, num_layers, num_heads, out_dir, tag, retrieval=True):

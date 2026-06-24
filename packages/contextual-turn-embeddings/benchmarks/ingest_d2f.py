@@ -3,11 +3,11 @@
 **mismo esquema** que `dialogs-2.0.pkl`.
 
 Para tests de **transferencia**: traer datasets que f2 **NO vio** en su pre-entrenamiento
-(Taskmaster1/2/3, WOZ2_0, SimJoint*) pero que vienen **ya anotados en NUESTRA taxonomía de actos**
+(SimJoint*, WOZ2_0, …) pero que vienen **ya anotados en NUESTRA taxonomía de actos**
 (D2F estandarizó los 20) → cero mapeo de etiquetas. Réplica exacta de la celda de carga de
 `ANN-UNSL/notebooks/notebook_01` (misma API, mismas columnas, mismo `dialogue_id`).
 
-    python ingest_d2f.py --datasets Taskmaster1 Taskmaster2 Taskmaster3 --name taskmaster
+    python ingest_d2f.py --datasets SimJointRestaurant SimJointMovie --name simjoint
 """
 import argparse
 from pathlib import Path
@@ -49,7 +49,7 @@ def ingest(configs):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--datasets", nargs="+", required=True,
-                    help="configs de D2F (p.ej. Taskmaster1 Taskmaster2 Taskmaster3)")
+                    help="configs de D2F (p.ej. SimJointRestaurant SimJointMovie)")
     ap.add_argument("--name", required=True, help="salida -> ANN/data/<name>_dialogs.pkl")
     args = ap.parse_args()
 
