@@ -91,12 +91,25 @@ def main():
     ap.add_argument("--heldout", action="store_true",
                     help="evaluar SOLO sobre held-out: diálogos EXCLUIDOS del training (inductivo, sin contaminación)")
     ap.add_argument("--todbert", action="store_true", help="sumar el baseline context-aware externo TOD-BERT")
+    ap.add_argument("--data", default=None,
+                    help="pkl de diálogos (default: in-domain dialogs-2.0). Transferencia: ANN/data/<name>_dialogs.pkl")
+    ap.add_argument("--embeddings", default=None,
+                    help="npy de e_t alineado por fila (default: in-domain). Generado por gen_et.py para transferencia")
+    ap.add_argument("--tag", default=None, help="sufijo del csv de salida (p.ej. taskmaster)")
+    ap.add_argument("--model", action="append", default=[], metavar="LABEL=relpath",
+                    help="checkpoint f2 arbitrario bajo models/ (repetible). Ej: 'f2-mpnet-AR=...-mpnet-v2-ar-1m/best'")
+    ap.add_argument("--no-default-models", action="store_true",
+                    help="no cargar la familia f2 de D2F hardcodeada (para ablación por-base con otro e_t)")
     args = ap.parse_args()
     from contextual_turn_embeddings import encode_dialogues
 
-    df = pd.read_pickle(ANN / "data/dialogs-2.0.pkl")[
+    data_path = Path(args.data) if args.data else ANN / "data/dialogs-2.0.pkl"
+    emb_path = Path(args.embeddings) if args.embeddings else ANN / "data/embeddings_dialog2flow.npy"
+    print(f"datos: {data_path.name} | e_t: {emb_path.name}"
+          + ("  [TRANSFERENCIA — f2 nunca vio estos datos]" if args.data else ""))
+    df = pd.read_pickle(data_path)[
         ["dialogue_id", "turn_id", "speaker", "utterance", "main_acts"]].copy()
-    emb = np.load(ANN / "data/embeddings_dialog2flow.npy", mmap_mode="r")
+    emb = np.load(emb_path, mmap_mode="r")
 
     rng = np.random.default_rng(args.seed)
     dids = pd.unique(df["dialogue_id"])
@@ -154,18 +167,25 @@ def main():
     if args.todbert:                                         # contexto APRENDIDO externo (no nuestro)
         reps["TOD-BERT (contexto)"] = encode_todbert(sub, groups, args.device)
     ck = lambda rel: MODELS / rel
-    for nm, rel in [("Contextual-AR (v1)", f"{N}-ar-full/best"), ("Contextual-AR (v2)", f"{N}-v2-ar-full/best"),
-                    ("Contextual-AR (v3)", f"{N}-v3-ar-full/best"), ("Contextual-Bidi (v1)", f"{N}-bidi-full/best"),
-                    ("Contextual-Bidi (v2)", f"{N}-v2-bidi-full/best"), ("Contextual-Bidi (v3)", f"{N}-v3-bidi-full/best")]:
+    for spec in args.model:                                  # checkpoints arbitrarios (ablación por-base)
+        label, rel = spec.split("=", 1)
         if (ck(rel) / "config.json").exists():
-            reps[nm] = encode(load_model(ck(rel)))
-    # trío de verificación
-    rnd = ck(f"{N}-v2-ar-full/best")
-    if rnd.exists():
-        reps["[trío] AR random-init"] = encode(random_like(rnd))          # sin entrenar
-    v3 = ck(f"{N}-v3-ar-full")                                            # best=ep5, root=última (ep13, overfit)
-    if (v3 / "model.safetensors").exists():
-        reps["[trío] v3-AR última-época"] = encode(load_model(v3))
+            reps[label] = encode(load_model(ck(rel)))
+        else:
+            print(f"  ⚠️ no existe el checkpoint {rel} (label {label}) — salteado")
+    if not args.no_default_models:                           # familia f2 de D2F (in-domain / D2F base)
+        for nm, rel in [("Contextual-AR (v1)", f"{N}-ar-full/best"), ("Contextual-AR (v2)", f"{N}-v2-ar-full/best"),
+                        ("Contextual-AR (v3)", f"{N}-v3-ar-full/best"), ("Contextual-Bidi (v1)", f"{N}-bidi-full/best"),
+                        ("Contextual-Bidi (v2)", f"{N}-v2-bidi-full/best"), ("Contextual-Bidi (v3)", f"{N}-v3-bidi-full/best")]:
+            if (ck(rel) / "config.json").exists():
+                reps[nm] = encode(load_model(ck(rel)))
+        # trío de verificación
+        rnd = ck(f"{N}-v2-ar-full/best")
+        if rnd.exists():
+            reps["[trío] AR random-init"] = encode(random_like(rnd))          # sin entrenar
+        v3 = ck(f"{N}-v3-ar-full")                                            # best=ep5, root=última (ep13, overfit)
+        if (v3 / "model.safetensors").exists():
+            reps["[trío] v3-AR última-época"] = encode(load_model(v3))
 
     # probe lineal (con StandardScaler -> converge bien)
     from sklearn.pipeline import make_pipeline
@@ -179,7 +199,12 @@ def main():
         p = clf.predict(Xte)
         return accuracy_score(yte, p), f1_score(yte, p, average="macro")
 
-    print(f"muestra: {len(sub)} turnos / {len(keep)} diálogos | clases act: {len(set(y_now[y_now!=None]))}\n")
+    n_cls = len(set(y_now[y_now != None]))  # noqa: E711
+    if n_cls < 2:
+        import sys
+        sys.exit(f"⚠️ solo {n_cls} clase(s) de acto acá → el probe no aplica: anotación de actos "
+                 f"degenerada (p.ej. Taskmaster en D2F = todo 'inform'). Elegí otro dataset.")
+    print(f"muestra: {len(sub)} turnos / {len(keep)} diálogos | clases act: {n_cls}\n")
     print(f"{'representación':28s} {'act(t) acc/F1':>16s}   {'act(t+1) acc/F1':>16s}")
     rows = []
     for nm, X in reps.items():
@@ -188,7 +213,8 @@ def main():
         print(f"{nm:28s}   {an:.3f}/{fn:.3f}        {ax:.3f}/{fx:.3f}")
         rows.append({"rep": nm, "act_now_acc": round(an, 4), "act_now_f1": round(fn, 4),
                      "act_next_acc": round(ax, 4), "act_next_f1": round(fx, 4)})
-    out = Path(__file__).resolve().parent / "figures" / ("act_probe_heldout.csv" if args.heldout else "act_probe.csv")
+    suffix = (f"_{args.tag}" if args.tag else "") + ("_heldout" if args.heldout else "")
+    out = Path(__file__).resolve().parent / "figures" / f"act_probe{suffix}.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(out, index=False)
     print(f"\nescrito: {out}")

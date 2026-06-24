@@ -98,6 +98,46 @@ tarea *next-act*— re-corrimos sobre el **held-out**: los **17.362 diálogos EX
   ("¿es nuestro transformer o sirve cualquier contexto aprendido sobre `e_t`?") sería un **LSTM/GRU sobre
   `e_t`** (mismo base, otra arquitectura) — queda anotada para el paper.
 
+## Transferencia — datasets que f2 NUNCA vio (leave-one-dataset-out)
+
+El held-out de arriba sigue siendo **"casa"**: son diálogos no vistos pero de los **mismos** datasets cuya
+*distribución* f2 sí entrenó. La prueba fuerte (estilo separación de GLUE) es un dataset TOD cuya
+**distribución entera** f2 nunca tocó. Lo tenemos **gratis**: nuestra colección de entrenamiento son **13**
+datasets = un **subconjunto de los 20 de D2F**. Los **7 que f2 no vio** (D2F's 20 − nuestros 13) ya vienen
+**estandarizados en nuestra taxonomía de actos** → cero mapeo de etiquetas. Es un leave-one-dataset-out que
+el split nos regaló.
+
+- **Taskmaster (1/2/3) quedó afuera:** en la estandarización de D2F el **100% de sus turnos es `'inform'`**
+  (trae anotación de API/slots, no actos de diálogo) → sin variedad de actos, el probe no aplica.
+- **SimJoint (M2M, Shah 2018) — Movie+Restaurant, 9 clases — es el vehículo.** Y es **más limpio que
+  Taskmaster**: M2M **no está** en los 9 datasets de TOD-BERT, así que en SimJoint **f2 y TOD-BERT juegan
+  los dos de visitante**; el único "local" es la base `e_t`/D2F (simétrica). Comparación apples-to-apples.
+
+**Resultado (SimJoint, ~25k turnos / 3k diálogos · transferencia) — act(t+1) F1, AR limpio:**
+
+| representación (en SimJoint) | act(t) F1 | **act(t+1) F1** | juega de |
+|---|--:|--:|---|
+| `e_t` (D2F) — la base | 0.961 | 0.518 | local |
+| EMA(0.6) | 0.968 | 0.517 | — |
+| SBERT-mpnet (genérico) | 0.930 | 0.502 | — |
+| **TOD-BERT (contexto)** | 0.867 | **0.493** | **visitante** |
+| **Contextual-AR (v2) = f2** | 0.956 | **0.721** | **visitante** |
+| Contextual-AR (v3) | 0.976 | 0.654 | visitante |
+| [trío] AR random-init | 0.974 | 0.536 | — |
+| Contextual-Bidi (v1) | 0.985 | 0.893 \* leakage | visitante |
+
+**Veredicto:**
+- Sobre datos que **f2 nunca vio**, el AR limpio saca **0.72** en next-act vs **0.49 de TOD-BERT** y **0.52
+  de D2F/EMA** → **+0.20 F1**. La contextualización de trayectoria **transfiere**; no era memorización de casa.
+- **Le ganamos a TOD-BERT en su partido de visitante** (los dos fuera de su distribución de entrenamiento)
+  → la ventaja no es "vimos estos datos", es la **estructura de trayectoria aprendida**.
+- **Control:** `act(t)` parejo y alto (~0.96, f2 no pierde el acto actual); **random-init 0.54 ≈ D2F** → el
+  salto a 0.72 es **el entrenamiento**, no la arquitectura.
+- **Caveat honesto:** SimJoint es **sintético** (self-play máquina-máquina) → trayectorias de actos más
+  regulares; el gap (+0.20) es **mayor** que el in-domain held-out (+0.11), probablemente por esa
+  regularidad. La **dirección y robustez** son sólidas; la **magnitud** hay que tomarla con pinzas hasta un
+  human-human externo (tier-2: STAR/SIMMC, fuera de la taxonomía → requiere mapeo de actos).
+
 ## Reproducir
 
 ```bash
@@ -105,7 +145,15 @@ tarea *next-act*— re-corrimos sobre el **held-out**: los **17.362 diálogos EX
 python benchmarks/act_probe.py --dialogues 4000
 # inductivo (solo held-out, sin contaminación) + baseline externo TOD-BERT:
 python benchmarks/act_probe.py --dialogues 4000 --heldout --todbert
+
+# transferencia (dataset que f2 nunca vio) — leave-one-dataset-out:
+python benchmarks/ingest_d2f.py --datasets SimJointRestaurant SimJointMovie --name simjoint
+python benchmarks/gen_et.py --name simjoint                      # e_t con D2F (idéntico a nb01c)
+python benchmarks/act_probe.py --tag simjoint --todbert \
+  --data  ~/Documents/GitHub/ANN-UNSL/data/simjoint_dialogs.pkl \
+  --embeddings ~/Documents/GitHub/ANN-UNSL/data/simjoint_e_t.npy
 ```
 Flags: `--no-sbert` saltea el download de SBERT · `--heldout` evalúa solo sobre lo no-visto · `--todbert`
-suma el baseline externo. Salidas: `figures/act_probe.csv` (transductivo) y `act_probe_heldout.csv`.
-Código: [`act_probe.py`](act_probe.py).
+suma el baseline externo · `--data/--embeddings` apuntan a otra colección + su `e_t` · `--tag` nombra el csv.
+Salidas: `figures/act_probe{,_heldout,_simjoint}.csv`. Código: [`act_probe.py`](act_probe.py) ·
+[`ingest_d2f.py`](ingest_d2f.py) · [`gen_et.py`](gen_et.py).

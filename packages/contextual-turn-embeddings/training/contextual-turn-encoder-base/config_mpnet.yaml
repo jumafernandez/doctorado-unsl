@@ -1,0 +1,65 @@
+# Fase A (base configurable) — f2 sobre base = all-mpnet-base-v2 (768-d, SBERT genérico).
+# Mismo recipe que el config.yaml de D2F; cambia SOLO la base de entrada (la arquitectura de f2 es
+# agnóstica a la base). Para correr en el notebook 02:
+#   - BASE_EMB_PATH  -> ~/Documents/GitHub/ANN-UNSL/data/embeddings_mpnet.npy   (alineado con dialogs-2.0.pkl)
+#   - out_dir tag    -> "...-mpnet-ar-full" / "...-mpnet-bidi-full"  (NO pisar los checkpoints de D2F)
+#   - dims: el notebook las auto-detecta del memmap (mpnet=768); acá quedan explícitas como registro.
+# Eval de transferencia: benchmarks con --embeddings .../simjoint_mpnet_e_t.npy
+
+model:
+  input_dim: 768
+  hidden_dim: 768
+  output_dim: 768          # mismo espacio que la base (residual h=LN(e_t+delta) requiere output_dim==input_dim)
+  num_layers: 4
+  num_heads: 8
+  dropout: 0.1
+  max_turns: 64
+  attention_mode: autoregressive
+  use_speaker_embeddings: true
+  num_speakers: 4
+  layer_norm: true
+  output_residual: true
+
+losses:
+  masked_reconstruction:
+    enabled: null
+    mask_prob: 0.15
+    weight: 1.0
+  next_turn_prediction:
+    enabled: null
+    weight: 1.0
+  embedding_retrieval:
+    enabled: true
+    weight: 1.0
+    temperature: 0.07
+    normalize: true
+    candidate_mode: in_batch
+    target: auto
+  lambda_cosine: 1.0
+
+training:
+  seed: 42
+  batch_size: 128
+  epochs: 10
+  learning_rate: 0.0002
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  gradient_clip_norm: 1.0
+  device: mps
+  mixed_precision: false
+  num_workers: 0
+  log_interval: 100
+  output_dir: models/contextual-turn-encoder-base-mpnet
+
+data:
+  max_turns: 64
+  window: truncate
+  stride: 32
+
+base_encoder:
+  model_name: sentence-transformers/all-mpnet-base-v2
+  backend: sentence_transformers
+  batch_size: 64
+  normalize: false
+  freeze: true
+  device: auto
