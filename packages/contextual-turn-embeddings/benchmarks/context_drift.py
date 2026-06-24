@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-PKG = Path(__file__).resolve().parent.parent.parent
+PKG = Path(__file__).resolve().parent.parent          # benchmarks/ -> contextual-turn-embeddings/
 MODELS = PKG / "models"
 ANN = Path("~/Documents/GitHub/ANN-UNSL").expanduser()
 NAME = "contextual-turn-encoder-base"
@@ -140,7 +140,8 @@ def main():
         e_al = e[meta["row_id"].to_numpy()]            # e_t alineado con H (orden de meta)
         rows.append(report(nm, e_al, np.asarray(H), meta["utterance"].to_list()))
 
-    out = PKG / "training/contextual-turn-encoder-base/figures/context_drift.csv"
+    out = Path(__file__).resolve().parent / "figures" / "context_drift.csv"
+    out.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(out, index=False)
     print(f"\nescrito: {out}")
     print("Lectura: drift bajo + ctx-sensitivity alto = MÁS contexto capturado.")

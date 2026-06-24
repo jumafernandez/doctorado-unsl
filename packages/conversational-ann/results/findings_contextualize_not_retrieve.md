@@ -75,5 +75,5 @@ y casi otro modelo** (contrastivo, SBERT-style), no este.
 
 ## Reproducibilidad
 - MSS: `scripts/eval_mss_llm.py --corpus 1m` (juez gpt-4.1-mini, seed 142, ventana 2; key en `ANN-UNSL/.env`).
-- Drift: `contextual-turn-embeddings/training/contextual-turn-encoder-base/context_drift.py`.
-- Probe: `…/act_probe.py` (`main_acts`, probe lineal, act(t) y act(t+1) + trío de verificación).
+- Drift: `contextual-turn-embeddings/benchmarks/context_drift.py`.
+- Probe: `contextual-turn-embeddings/benchmarks/act_probe.py` (`main_acts`, probe lineal, act(t) y act(t+1) + trío de verificación).

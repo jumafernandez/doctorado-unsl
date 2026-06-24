@@ -102,9 +102,9 @@ tarea *next-act*— re-corrimos sobre el **held-out**: los **17.362 diálogos EX
 
 ```bash
 # transductivo (toda la colección):
-python training/contextual-turn-encoder-base/act_probe.py --dialogues 4000
+python benchmarks/act_probe.py --dialogues 4000
 # inductivo (solo held-out, sin contaminación) + baseline externo TOD-BERT:
-python training/contextual-turn-encoder-base/act_probe.py --dialogues 4000 --heldout --todbert
+python benchmarks/act_probe.py --dialogues 4000 --heldout --todbert
 ```
 Flags: `--no-sbert` saltea el download de SBERT · `--heldout` evalúa solo sobre lo no-visto · `--todbert`
 suma el baseline externo. Salidas: `figures/act_probe.csv` (transductivo) y `act_probe_heldout.csv`.

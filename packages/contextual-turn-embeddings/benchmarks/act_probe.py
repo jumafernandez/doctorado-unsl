@@ -26,9 +26,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 
-PKG = Path(__file__).resolve().parent.parent.parent
+PKG = Path(__file__).resolve().parent.parent          # benchmarks/ -> contextual-turn-embeddings/
 MODELS = PKG / "models"
 ANN = Path("~/Documents/GitHub/ANN-UNSL").expanduser()
+RECIPE = PKG / "training" / "contextual-turn-encoder-base"   # heldout.py vive acá
 N = "contextual-turn-encoder-base"
 
 
@@ -101,7 +102,7 @@ def main():
     dids = pd.unique(df["dialogue_id"])
     if args.heldout:                                          # solo diálogos NUNCA vistos en el training
         import sys
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        sys.path.insert(0, str(RECIPE))           # heldout.py quedó en training/, no acá
         import heldout as H
         ho = set(H.heldout_dialogue_ids(df))
         dids = np.array([d for d in dids if d in ho])
@@ -187,7 +188,8 @@ def main():
         print(f"{nm:28s}   {an:.3f}/{fn:.3f}        {ax:.3f}/{fx:.3f}")
         rows.append({"rep": nm, "act_now_acc": round(an, 4), "act_now_f1": round(fn, 4),
                      "act_next_acc": round(ax, 4), "act_next_f1": round(fx, 4)})
-    out = Path(__file__).parent / "figures" / ("act_probe_heldout.csv" if args.heldout else "act_probe.csv")
+    out = Path(__file__).resolve().parent / "figures" / ("act_probe_heldout.csv" if args.heldout else "act_probe.csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(out, index=False)
     print(f"\nescrito: {out}")
     print("Lectura: act(t+1) es la prueba de contexto — si h_t > e_t ahí, captura trayectoria.")
