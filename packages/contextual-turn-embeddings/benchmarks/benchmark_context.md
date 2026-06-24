@@ -138,6 +138,39 @@ el split nos regaló.
   regularidad. La **dirección y robustez** son sólidas; la **magnitud** hay que tomarla con pinzas hasta un
   human-human externo (tier-2: STAR/SIMMC, fuera de la taxonomía → requiere mapeo de actos).
 
+## Base configurable — ablación de f1 (preliminar, escala 1m)
+
+f2 es una **capa agnóstica a la base**: `e_t` puede venir de cualquier encoder por-turno (diseño en
+[`research_notes.md §8`](../docs/research_notes.md)). Entrenamos f2 (v2-AR) sobre **tres f1 distintas** a
+escala **1m** y evaluamos en SimJoint. f1 queda **congelado** (pre-entrenado); se re-genera su `e_t` y se
+re-entrena **solo f2** (un f2 por base — los pesos quedan atados al espacio de esa f1).
+
+| representación (SimJoint, 1m) | act(t) F1 | **act(t+1) F1** |
+|---|--:|--:|
+| Random | 0.091 | 0.107 |
+| base = **D2F** (act-tuned) · `e_t` | 0.961 | 0.518 |
+| base = **D2F** · **f2(D2F)** | 0.973 | **0.564** |
+| base = **mpnet** (genérico) · `e_t` | 0.930 | 0.501 |
+| base = **mpnet** · **f2(mpnet)** | 0.936 | **0.542** |
+| base = **TOD-BERT** (1-turno) · `e_t` | 0.946 | 0.508 |
+| base = **TOD-BERT** · **f2(TOD-BERT)** | 0.932 | **0.546** |
+| TOD-BERT con su **propio** contexto (vent. 5) | 0.867 | 0.491 |
+| *ref — f2(D2F) **full** (~4h)* | *0.956* | *0.721* |
+
+Tres comparaciones, cada una responde otra pregunta:
+- **B · base-agnóstico:** dentro de cada base, f2 > `e_t` por **+0.04–0.046** (parejo en las 3, también > EMA)
+  → la contextualización es del **método**, no de D2F.
+- **C · head-to-head limpio:** f2(TOD-BERT) **0.546** > TOD-BERT-nativo **0.491** (+0.055) → con la base
+  constante, el contexto de f2 supera al de TOD-BERT (cuyo contexto de ventana incluso *empeora* su turno aislado).
+- **A · f2 vs TOD-BERT como producto:** f2(D2F) 0.564 vs TOD-BERT-nativo 0.491 (+0.073); a full, 0.721 vs 0.491
+  (+0.23). Mezcla base + mecanismo (por eso C lo aísla).
+
+**Caveats:** (1) **escala** — esto es 1m; el mismo f2(D2F) sube 0.564→**0.721** a full → estos números son
+**piso/dirección, no magnitud** (full de las 3 bases: pendiente). (2) `act(t+1)` tiene **techo intrínseco**
+(es forecasting, no read-off; el Bidi *con leakage* solo llega a 0.89 → ruido de etiqueta + entropía de la
+tarea) → leer los Δ contra el headroom alcanzable (~0.52 piso → ~0.72 techo limpio), no contra 1.0.
+CSVs: `figures/act_probe_simjoint_{d2f,mpnet,todbert}.csv`.
+
 ## Reproducir
 
 ```bash
@@ -152,8 +185,19 @@ python benchmarks/gen_et.py --name simjoint                      # e_t con D2F (
 python benchmarks/act_probe.py --tag simjoint --todbert \
   --data  ~/Documents/GitHub/ANN-UNSL/data/simjoint_dialogs.pkl \
   --embeddings ~/Documents/GitHub/ANN-UNSL/data/simjoint_e_t.npy
+
+# base configurable: f2 sobre otra f1 (mpnet | minilm | todbert). Ej: TOD-BERT single-turn (1m)
+D=~/Documents/GitHub/ANN-UNSL/data
+python benchmarks/gen_et.py --data $D/dialogs-2.0.pkl --base todbert --out $D/embeddings_todbert.npy
+python training/contextual-turn-encoder-base/train_base.py --base todbert --mode autoregressive --epochs 8
+python benchmarks/gen_et.py --name simjoint --base todbert                 # e_t de eval para esa base
+python benchmarks/act_probe.py --tag simjoint_todbert --no-default-models --no-sbert --todbert \
+  --data $D/simjoint_dialogs.pkl --embeddings $D/simjoint_todbert_e_t.npy \
+  --model "f2-todbert-AR=contextual-turn-encoder-base-todbert-v2-ar-1m/best"
 ```
-Flags: `--no-sbert` saltea el download de SBERT · `--heldout` evalúa solo sobre lo no-visto · `--todbert`
-suma el baseline externo · `--data/--embeddings` apuntan a otra colección + su `e_t` · `--tag` nombra el csv.
-Salidas: `figures/act_probe{,_heldout,_simjoint}.csv`. Código: [`act_probe.py`](act_probe.py) ·
-[`ingest_d2f.py`](ingest_d2f.py) · [`gen_et.py`](gen_et.py).
+Flags: `--no-sbert` saltea SBERT · `--heldout` solo lo no-visto · `--todbert` suma el baseline externo ·
+`--data/--embeddings` apuntan a otra colección + su `e_t` · `--base` elige la f1 (`gen_et`/`train_base`) ·
+`--model LABEL=path` carga un checkpoint f2 arbitrario · `--no-default-models` evita la familia f2 de D2F.
+Salidas: `figures/act_probe{,_heldout,_simjoint,_simjoint_<base>}.csv`. Código: [`act_probe.py`](act_probe.py) ·
+[`ingest_d2f.py`](ingest_d2f.py) · [`gen_et.py`](gen_et.py) ·
+[`train_base.py`](../training/contextual-turn-encoder-base/train_base.py).

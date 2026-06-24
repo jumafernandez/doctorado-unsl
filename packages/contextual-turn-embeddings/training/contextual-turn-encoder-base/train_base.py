@@ -31,7 +31,7 @@ from contextual_turn_embeddings import (Config, DialogueDataset, EmbeddingRetrie
 from contextual_turn_embeddings.train import build_linear_warmup_scheduler  # noqa: E402
 
 BASE_EMB = {"d2f": "embeddings_dialog2flow.npy", "mpnet": "embeddings_mpnet.npy",
-            "minilm": "embeddings_minilm.npy"}
+            "minilm": "embeddings_minilm.npy", "todbert": "embeddings_todbert.npy"}
 
 
 def train_variant(df_train, emb_memmap, base_cfg, mode, num_layers, num_heads, out_dir, tag, retrieval=True):
