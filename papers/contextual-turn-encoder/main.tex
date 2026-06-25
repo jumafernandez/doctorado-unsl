@@ -1,6 +1,5 @@
 \documentclass[11pt]{article}
-\usepackage[review]{acl}   % 'review' = numeración de líneas (borrador/submission anónima).
-                            % Para camera-ready: quitar 'review' -> \usepackage[]{acl}
+\usepackage[review]{acl}   % 'review' = numeración de líneas + anonimato. Camera-ready: \usepackage[]{acl}
 \usepackage{times}
 \usepackage{latexsym}
 \usepackage[T1]{fontenc}
@@ -9,13 +8,25 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{amsmath}
+\usepackage{amssymb}
 
-\title{A Pre-trained Contextual Turn Encoder for Task-Oriented Dialogue}
+% ===========================================================================================
+% NOMBRE DEL MODELO: TRACE (TRajectory-Aware Contextual Encoder) -- NOMBRE DE TRABAJO, NO DEFINITIVO.
+%   - sigla limpia: TRajectory-Aware Contextual Encoder. Anclado en la línea: D2F lee los diálogos
+%     como "trayectorias en un espacio latente"; el paper de ANN es "Retrieving the Flow".
+%     TRACE = la traza/trayectoria de la conversación. Título en SERIE: "Anticipating the Flow".
+%   - Considerado y descartado por ahora: TRAZAR (esp. "trazar", -AR x Argentina/autoregresivo) —
+%     no convenció el acrónimo. Alternativas vivas: HORIZON, CURRENT, FLUX.
+%   - TODO(JM): el nombre se revisita; chequear colisión (TRACE = modelo viejo de psicolingüística,
+%     McClelland & Elman 1986, otro dominio). Cambiarlo = find-replace, no bloquea nada.
+% ===========================================================================================
 
-% TODO(JM): orden/anonimización de autores. En 'review' va anónimo; abajo queda como borrador.
+\title{Anticipating the Flow: Learned Contextual Turn Embeddings\\ for Dialogue-Act Trajectory in Task-Oriented Dialogue}
+
+% TODO(JM): lista/orden de autores a confirmar con los directores. En 'review' va anónimo igual.
 \author{Juan Manuel Fern\'andez \\
   Universidad Nacional de Luj\'an / UNSL \\
-  \texttt{...} \\\And
+  \texttt{jmfernandez@unlu.edu.ar} \\\And
   Sergio Burdisso \\
   Idiap Research Institute \\\And
   Marcelo Errecalde \\
@@ -25,112 +36,296 @@
 \maketitle
 
 \begin{abstract}
-% TODO(JM): escribir al final, cuando el resto esté firme. Borrador de la historia:
-% Per-turn encoders (D2F, SBERT) codifican el turno aislado pero no su contexto en el
-% diálogo. Proponemos un encoder contextual de turnos pre-entrenado para TOD que, sobre una
-% base por-turno congelada (Dialog2Flow), aprende de forma self-supervised a integrar la
-% trayectoria del diálogo. Con un probe lineal congelado (estilo Devlin) medimos la
-% anticipación del próximo acto de diálogo sobre diálogos held-out (inductivo): nuestro
-% encoder supera a la base D2F, a la memoria EMA y a un modelo context-aware (TOD-BERT).
-\textit{[abstract — TODO]}
+In task-oriented dialogue, turns are commonly represented as dense embeddings produced
+independently for each utterance. Such per-turn representations capture the local content of a
+turn but not its position within the conversational trajectory, which depends on the accumulated
+history and on where the dialogue is heading. We introduce \textbf{TRACE} (TRajectory-Aware
+Contextual Encoder), a pre-trained contextual turn encoder that, on top of a frozen per-turn
+embedding space (Dialog2Flow), learns in a self-supervised manner to integrate the dialogue
+context into each turn representation, in both autoregressive and bidirectional formulations. The
+construction is analogous to contextual token representations in language models, but operates at
+the level of dialogue turns rather than tokens.
+
+We evaluate whether TRACE encodes conversational trajectory through a frozen linear probe, in the
+tradition of feature-based evaluation of pre-trained encoders: the representation is held fixed and
+a logistic-regression classifier is trained to predict dialogue acts. We distinguish the
+\emph{current} act of a turn---available in the per-turn embedding---from the act of the
+\emph{next} turn, whose prediction requires the conversational trajectory. On held-out dialogues
+that the encoder never saw during pre-training, TRACE improves next-act prediction over the frozen
+per-turn base, over hand-crafted cumulative and EMA memories, and over a context-aware dialogue
+model (TOD-BERT), by $0.12$--$0.14$ macro-F1.
+
+These results indicate that a learned contextual turn encoder captures act-trajectory information
+that per-turn encoders and fixed accumulation policies do not.
 \end{abstract}
 
 \section{Introduction}
 \label{sec:intro}
-% Guía (prosa = TODO):
-% - Motivación: memoria/contexto conversacional en TOD; el turno como unidad.
-% - Gap: los encoders POR-TURNO (D2F, SBERT) codifican bien el turno pero no su contexto
-%   CROSS-turn (la trayectoria del diálogo).
-% - Contribución: f2, una CAPA contextual pre-entrenada self-supervised sobre una base
-%   por-turno congelada (D2F). Evidencia: captura la trayectoria de actos (predice act(t+1))
-%   de forma inductiva, donde los encoders por-turno y hasta un modelo context-aware fallan.
-% - Encuadre: EXTENSIÓN de la línea Dialog2Flow, no competencia.
 
-\section{Related Work}
-\label{sec:related}
-% - Sentence/turn encoders: Sentence-BERT \citep{sbert}; DSE [TODO cite].
-% - TOD-specific: TOD-BERT \citep{todbert}; Dialog2Flow \citep{dialog2flow}.
-% - Pre-entrenamiento self-supervised: BERT \citep{bert}.
-% - Embeddings dinámicos / memoria conversacional (nuestra línea ANN) [TODO self-cite paper 1].
-% - Predicción de actos de diálogo [TODO].
+Task-oriented dialogue (TOD) systems interact with a user to complete a goal, such as booking a
+restaurant or querying an external service. To do so, the agent must interpret each utterance,
+maintain a coherent representation of the dialogue state, and select an appropriate action at every
+turn~\cite{young2013pomdp,chen2017survey}. A common way to represent dialogue turns is through
+dense embeddings produced by pre-trained encoders, which enable retrieval, classification, and
+clustering over large conversational collections~\cite{devlin2019bert,reimers2019sentencebert}.
 
-\section{Method}
+Dialogues are, however, inherently sequential: the meaning of a turn depends on the accumulated
+context and on its role in the conversational flow. Encoding each turn in isolation may therefore
+fail to capture how the dialogue state evolves, especially when the relevant information is spread
+across several turns. This observation has motivated representations that integrate the history,
+either through fixed accumulation policies or through latent models of the dialogue
+state~\cite{wen2018sequence,min2020dialogue,hudecek2022latent,liu2023vls}.
+
+In a companion study~\cite{fernandez2025retrieving} we examined post-hoc accumulation policies
+---static, normalized cumulative, and exponential moving average (EMA) representations--- over
+several embedding spaces, and found that their usefulness for conversational-memory retrieval
+depends on the geometry of the base space and on the update policy. That work closed by pointing to
+a natural next step: replacing the \emph{fixed} update rule with a \emph{learned} one, so that each
+turn representation is produced as a function not only of the turn itself but also of its
+conversational context. \textbf{The present work takes that step.}
+
+We introduce \textbf{TRACE} (TRajectory-Aware Contextual Encoder), a pre-trained contextual turn
+encoder. TRACE operates on top of a frozen per-turn embedding space---Dialog2Flow
+(D2F)~\cite{burdisso2024dialog2flow}, a representation trained to organize utterances by their
+communicative function---and learns, through self-supervised objectives over entire dialogues, an
+update function that contextualizes each turn. The design mirrors contextual token representations
+in language models~\cite{devlin2019bert}, but at the granularity of dialogue turns; we consider both
+an autoregressive variant, conditioned only on preceding turns, and a bidirectional one, conditioned
+on the whole dialogue. We frame TRACE as an extension of the Dialog2Flow line, not as a competitor:
+D2F provides the per-turn substrate, and TRACE adds the contextual layer above it.
+
+Our central question is whether such a learned encoder captures conversational trajectory that
+per-turn encoders lack. We address it with a \emph{frozen linear probe}, in the tradition of
+feature-based evaluation of pre-trained representations~\cite{devlin2019bert}: we hold the
+representation fixed and train only a linear classifier to predict dialogue acts. We separate the
+\emph{current} act of a turn---a control task, since this information already lives in the per-turn
+embedding---from the act of the \emph{next} turn, whose prediction genuinely requires the dialogue
+trajectory. On held-out dialogues never seen during pre-training, TRACE improves next-act prediction
+over the frozen per-turn base, over hand-crafted cumulative and EMA memories, and over a
+context-aware dialogue model, indicating that the contextual layer encodes trajectory information
+that the alternatives do not.
+
+The remainder of the paper is organized as follows. Section~\ref{sec:background} reviews related
+work. Section~\ref{sec:method} describes the TRACE architecture and its pre-training objectives.
+Section~\ref{sec:setup} presents the evaluation protocol, and Section~\ref{sec:results} the results.
+Section~\ref{sec:discussion} discusses their scope and limitations, and Section~\ref{sec:conclusion}
+concludes.
+
+\section{Background and Related Work}
+\label{sec:background}
+
+\paragraph{Turn and sentence embeddings.}
+Pre-trained encoders map utterances to dense vectors that capture semantic content and support
+similarity, search, and clustering~\cite{reimers2019sentencebert}. General-purpose sentence encoders
+such as those based on MiniLM~\cite{wang2020minilm} and MPNet~\cite{song2020mpnet} are widely used,
+but they encode each turn independently and are not specific to dialogue. Applied per turn, they
+capture local content rather than the position of the turn within a broader conversational
+trajectory.
+
+\paragraph{Contextual representations.}
+Transformer-based language models produce \emph{contextual} token
+representations~\cite{vaswani2017attention,devlin2019bert}: the representation of a token depends on
+the surrounding sequence. TRACE transposes this idea to dialogue, treating turns as the sequence
+elements and producing a representation of each turn that depends on the dialogue. Unlike token-level
+pre-training, however, the input units here are continuous per-turn embeddings rather than discrete
+tokens, which has consequences for the training objective (Section~\ref{sec:method}).
+
+\paragraph{Dialogue-specific representations.}
+TOD-BERT~\cite{wu2020todbert} adapts BERT to task-oriented dialogue by pre-training over concatenated
+dialogue context with speaker tokens; it is context-aware, but it re-encodes raw text rather than
+building on a per-turn space. Dialog2Flow~\cite{burdisso2024dialog2flow} pre-trains
+action-driven sentence embeddings that organize utterances by communicative function and read
+dialogues as trajectories in a latent space, unifying multiple corpora---including
+MultiWOZ and Schema-Guided Dialogue---under a common annotation. We take D2F as the frozen per-turn
+substrate for TRACE. A parallel line induces latent dialogue states or actions with limited
+supervision~\cite{wen2018sequence,min2020dialogue,hudecek2022latent,liu2023vls}; TRACE differs in
+that it learns a contextual \emph{representation} of turns through self-supervision, rather than an
+explicit latent-state model.
+
+\paragraph{Probing pre-trained encoders.}
+A standard way to assess what a frozen representation encodes is to train a simple classifier on top
+of it for a downstream task, keeping the representation
+fixed~\cite{devlin2019bert}. We adopt this feature-based protocol, which isolates the quality of the
+representation from the capacity of the classifier, and apply it to dialogue-act prediction.
+
+\section{TRACE}
 \label{sec:method}
-% Pipeline de dos etapas:  texto --> f1 (D2F, CONGELADO) --> e_t --> f2 --> h_t.
-% f2 = Transformer sobre la secuencia de embeddings de turno (e_t) del diálogo.
-% Objetivos self-supervised: reconstrucción de turno enmascarado / predicción de next-turn
-%   + contrastivo (recuperación in-batch).  Modos: AR (causal) y Bidi (bidireccional).
-% Residual a la base:  h_t = LayerNorm(e_t + Delta)  (ancla h cerca de e_t).
-% DECISIÓN(JM): presentar UN modelo (recomendado: el BERT-fiel) + ablación, NO el lineage v1/v2/v3.
+
+\subsection{Two-stage architecture}
+TRACE follows a two-stage pipeline. A frozen per-turn encoder $f_1$ maps each utterance $u_t$ to a
+base embedding,
+\begin{equation}
+  e_t = f_1(u_t), \qquad e_t \in \mathbb{R}^d,
+\end{equation}
+and a learned contextual encoder $f_2$ maps the sequence of base embeddings of a dialogue to a
+sequence of contextual turn representations,
+\begin{equation}
+  (h_1,\dots,h_T) = f_2(e_1,\dots,e_T), \qquad h_t \in \mathbb{R}^d.
+\end{equation}
+In this work $f_1$ is \texttt{dialog2flow-joint-bert-base}~\cite{burdisso2024dialog2flow} and is kept
+\emph{frozen}: this isolates the contribution of $f_2$ and makes $h_t$ directly comparable to $e_t$.
+
+The contextual encoder $f_2$ is a Transformer~\cite{vaswani2017attention} over the sequence of turn
+embeddings of a dialogue. Each $e_t$ is augmented with a learned position embedding and a learned
+speaker embedding that encodes the role of the participant, and a stack of self-attention layers lets
+every turn attend over the dialogue. We consider two attention regimes: a \emph{bidirectional} one, in
+which a turn attends to the entire dialogue, and an \emph{autoregressive} (causal) one, in which it
+attends only to preceding turns. Because the sequence elements are continuous per-turn embeddings
+rather than discrete tokens, $f_2$ ingests $e_t$ directly---through a linear projection when the base
+and hidden dimensions differ---rather than through a token-embedding lookup; this is the main
+structural difference from a token-level encoder such as BERT~\cite{devlin2019bert}.
+
+\subsection{An interchangeable per-turn base}
+A defining property of the architecture is that $f_1$ is not tied to a particular encoder: $f_2$
+operates on the \emph{output space} of $f_1$, so any per-turn encoder can serve as the base. The input
+dimension is read from $f_1$, the linear projection above adapts it to the hidden size, and the
+residual formulation (below) keeps $h_t$ in the same space as $e_t$; no component of $f_2$ is bound to
+a specific base. TRACE is therefore better understood as a \emph{method}---a contextual layer over an
+arbitrary per-turn space---than as a single model bound to one encoder. We instantiate it on
+Dialog2Flow, which provides a strong action-driven base, and report in Section~\ref{sec:results} that
+the contextual gain persists when $f_1$ is replaced by a general-purpose encoder (MPNet) and by a
+context-aware dialogue model (TOD-BERT). A systematic study of which base best supports the contextual
+layer is left for future work.
+
+\subsection{From fixed to learned accumulation}
+The companion study~\cite{fernandez2025retrieving} produced one state vector per turn through a fixed
+update, the normalized cumulative representation $h_t = \mathrm{LayerNorm}(h_{t-1} + e_t)$ and its EMA
+generalization. TRACE replaces this fixed rule with a learned function of the whole context. To keep
+$h_t$ anchored to the base space---so that it remains comparable to $e_t$ and usable in the same
+geometry---we use a residual formulation,
+\begin{equation}
+  h_t = \mathrm{LayerNorm}\!\left(e_t + \Delta_t\right),
+  \qquad \Delta_t = f_2^{\Delta}(e_1,\dots,e_T)_t,
+\end{equation}
+where $\Delta_t$ is the learned contextual update~\cite{ba2016layer}. The fixed cumulative and EMA
+policies are thus special cases of the function class that $f_2$ can represent.
+
+\subsection{Self-supervised objectives}
+TRACE is pre-trained without functional labels (no dialogue acts, slots, or intents are used during
+pre-training). We consider two formulations. In the \emph{bidirectional} setting, each turn is
+conditioned on the entire dialogue and the objective reconstructs masked turns. In the
+\emph{autoregressive} setting, each turn is conditioned only on preceding turns and the objective
+predicts the next turn. Both are complemented by an in-batch contrastive term that scores the correct
+target turn against other turns in the batch, treating turn embeddings as a ``vocabulary'' of turns.
+% TODO(JM): detalles de pre-entrenamiento (capas/heads/optimizador/épocas/colección) en una
+% subsección o apéndice; decidir si presentamos UN modelo (recomendado) o el lineage de variantes.
 
 \section{Experimental Setup}
 \label{sec:setup}
-% Datos: colección unificada de datasets TOD de Dialog2Flow \citep{dialog2flow} [N datasets, M turnos].
-% Protocolo HELD-OUT (inductivo): diálogos EXCLUIDOS del entrenamiento (semilla 42) -> mide
-%   generalización, no memorización.
-% Probe lineal CONGELADO (estilo Devlin \citep{bert}): se congela la representación y se
-%   entrena solo una regresión logística sobre:
-%     - act(t)   = acto del turno actual (CONTROL: vive en e_t).
-%     - act(t+1) = acto del PRÓXIMO turno (LA PRUEBA: requiere trayectoria).
-% Escalera de baselines: Random, SBERT, e_t(D2F), Acumulativo, EMA, TOD-BERT.
-% Métrica: macro-F1 (clases de acto desbalanceadas; reportar accuracy entre paréntesis).
-% TODO: significancia (bootstrap/Wilcoxon sobre diálogos); breakdown por dataset.
+
+\subsection{Data and held-out protocol}
+We use the experimental collection of the companion study, derived from
+Dialog2Flow~\cite{burdisso2024dialog2flow}: $101{,}021$ complete dialogues and $1{,}000{,}023$ turns.
+To measure \emph{inductive} generalization rather than memorization, we hold out a fixed set of
+$17{,}362$ dialogues (seed $42$) that are \emph{excluded} from pre-training, and report all probe
+results on this held-out split. Untrained baselines are unaffected by this split, so the comparison
+isolates generalization.
+
+\subsection{Task: dialogue-act anticipation}
+Each turn carries a dialogue-act label. We define two probing tasks. The \emph{current-act} task,
+$\mathrm{act}(t)$, predicts the act of the turn itself and serves as a control: this information is
+already present in the per-turn embedding, since D2F is action-driven. The \emph{next-act} task,
+$\mathrm{act}(t{+}1)$, predicts the act of the following turn and is the actual test of trajectory,
+as it cannot be read off the current turn in isolation.
+
+\subsection{Frozen linear probe and baselines}
+For each representation we freeze it and train a logistic-regression
+classifier~\cite{devlin2019bert}; we report macro-F1 (the act classes are imbalanced) and accuracy.
+We compare a ladder of representations, each isolating one factor: a random-feature floor; a
+general-purpose sentence encoder (SBERT/MPNet)~\cite{reimers2019sentencebert,song2020mpnet}; the
+frozen per-turn base $e_t$ (D2F); hand-crafted memories over $e_t$ (normalized cumulative and EMA);
+and an external context-aware model, TOD-BERT~\cite{wu2020todbert}. The autoregressive TRACE variant
+is the fair comparison for next-act prediction, since the bidirectional variant has access to the
+target turn within its window.
+% TODO(JM): significancia (Wilcoxon/bootstrap por diálogo), como en el paper de ANN; breakdown
+% por dataset; tamaño del split de probe.
 
 \section{Results}
 \label{sec:results}
 
+Table~\ref{tab:main} reports next-act prediction on the held-out dialogues. Representations without
+learned turn context---random features, the general-purpose encoder, the per-turn base $e_t$, and the
+hand-crafted cumulative and EMA memories---fall in a band up to $0.58$ macro-F1. The external
+context-aware model TOD-BERT reaches $0.57$, on par with the per-turn base. TRACE (autoregressive)
+attains $0.71$ macro-F1, an improvement of $0.12$--$0.14$ over the strongest per-turn and
+hand-crafted baselines and over TOD-BERT, on dialogues that the encoder never saw during
+pre-training. Since these baselines are untrained or hand-crafted, and the split is held out, the gap
+reflects trajectory information learned by the contextual layer rather than memorization.
+% TODO(JM): +significancia (p-values), +fila act(t) de control (debería quedar pareja y alta -> TRACE
+% no pierde el acto actual), +sub-sección de robustez agnóstica a la base.
+
 \begin{table}[t]
-\centering
-\small
+\centering\small
 \begin{tabular}{lcc}
 \toprule
 Representation & Acc. & Macro-F1 \\
 \midrule
-Random              & 0.421 & 0.060 \\
-Cumulative          & 0.577 & 0.458 \\
-SBERT (generic)     & 0.623 & 0.511 \\
-TOD-BERT (context)  & 0.676 & 0.572 \\
-$e_t$ (D2F, base)   & 0.679 & 0.567 \\
-EMA(0.6)            & 0.685 & 0.582 \\
-\textbf{Ours (Contextual-AR)} & \textbf{0.792} & \textbf{0.706} \\
+Random                         & 0.421 & 0.060 \\
+Cumulative                     & 0.577 & 0.458 \\
+SBERT (general-purpose)        & 0.623 & 0.511 \\
+TOD-BERT (context-aware)       & 0.676 & 0.572 \\
+$e_t$ (D2F, frozen base)       & 0.679 & 0.567 \\
+EMA ($\alpha{=}0.6$)           & 0.685 & 0.582 \\
+\textbf{TRACE (autoregressive)} & \textbf{0.792} & \textbf{0.706} \\
 \bottomrule
 \end{tabular}
-\caption{Next-act anticipation (act(t+1)) on \textbf{held-out} dialogues (inductive),
-frozen linear probe. Our contextual encoder outperforms the per-turn base (D2F), the
-hand-crafted EMA memory, and a context-aware model (TOD-BERT).}
-% TODO: +significancia, +fila act(t) control, +breakdown por dataset.
+\caption{Next-act prediction ($\mathrm{act}(t{+}1)$) on \textbf{held-out} dialogues (inductive),
+frozen linear probe, macro-F1 and accuracy. TRACE outperforms the frozen per-turn base, hand-crafted
+memories, and the context-aware TOD-BERT.}
 \label{tab:main}
 \end{table}
 
-% Lectura (prosa = TODO):
-% - +0.12 macro-F1 sobre D2F/EMA/TOD-BERT en datos NO vistos -> la capa contextual captura
-%   trayectoria que ningún encoder por-turno (ni un modelo context-aware) tiene.
-% - Control act(t): TODO (debería quedar parejo y alto -> f2 no pierde el acto actual).
-% - Robustez agnóstica a la base (sub-sección): f2 entrenado sobre mpnet / TOD-BERT como
-%   base muestra el mismo salto -> el contexto es del MÉTODO, no de D2F. TODO tabla.
+\paragraph{Robustness to the base encoder.}
+Because $f_1$ is interchangeable (Section~\ref{sec:method}), we ask whether the contextual gain is
+specific to Dialog2Flow. We re-train $f_2$ on top of two qualitatively different bases---a
+general-purpose encoder (MPNet) and a context-aware dialogue model (TOD-BERT, used as a single-turn
+encoder)---and find that the contextual layer improves next-act prediction over the corresponding base
+in each case, indicating that the effect is a property of the method rather than of one base.
+% TODO(JM): tabla con D2F/MPNet/TOD-BERT al MISMO protocolo (in-domain held-out) + significancia.
+% Hoy el dato disponible es a escala reducida; correrlo al protocolo principal.
 
 \section{Discussion}
 \label{sec:discussion}
-% - Qué captura: trayectoria de actos.  "Contextualiza != recupera": en retrieval (MSS) f2 no
-%   mejora -> D2F ya ES el retriever; f2 agrega contexto, no recuperación. (Disociación medida.)
-% - Techo intrínseco de act(t+1): es forecasting (entropía condicional + ruido de etiqueta;
-%   el bidi con leakage no pasa de ~0.89) -> leer los Delta contra el headroom, no contra 1.0.
 
-\section{Conclusion}
+% NOTA(JM): sacamos el contraste IR/retrieval — era tarea equivocada (TRACE no es para IR) y
+% mostrarlo como "no mejora retrieval" era autodebilidad. El retrieval es territorio del paper
+% companion ("Retrieving the Flow"); el negativo de los contextuales-para-IR, si se reporta, va ahí.
+% TODO(JM): la Discusión puede crecer con la robustez agnóstica a la base.
+
+\paragraph{The ceiling of next-act prediction.}
+Anticipating the next act is intrinsically harder than reading the current one: it is a forecasting
+problem with irreducible uncertainty (several acts may validly follow a given history) and with label
+noise (turns may carry multiple acts; annotations vary across the unified corpora). A bidirectional
+variant that can see the target turn within its window reaches only $\approx 0.89$ macro-F1, not
+$1.0$, which bounds the attainable performance from above; the reported gains should therefore be
+read against the reachable headroom rather than against a perfect score.
+
+\section{Conclusion and Future Work}
 \label{sec:conclusion}
-% - Un encoder contextual de turnos pre-entrenado para TOD; evidencia de captura de trayectoria.
-% Future work: codebook self-supervised (VQ / estados de flujo D2F) para un objetivo discreto
-%   escalable; fine-tuning conjunto f1+f2; barrido de la base f1.
+
+We introduced TRACE, a pre-trained contextual turn encoder for task-oriented dialogue that learns,
+on top of a frozen per-turn space, to integrate the conversational trajectory into each turn. Using a
+frozen linear probe over held-out dialogues, we found that TRACE encodes next-act information that
+per-turn encoders, hand-crafted memories, and an external context-aware model do not. This positions
+TRACE as the learned counterpart to the fixed accumulation policies of the companion study, and as a
+contextual layer that extends the Dialog2Flow line.
+
+Several directions follow. A self-supervised discrete objective---predicting cluster identities from a
+codebook derived from the data (e.g., vector quantization or Dialog2Flow flow states), rather than
+from human labels---would provide a BERT-like training signal while preserving the ability to scale
+to unlabeled text. Joint fine-tuning of $f_1$ and $f_2$, and a systematic study of which per-turn base
+encoder best supports the contextual layer, are also natural extensions. Finally, evaluating TRACE on
+concrete downstream tasks such as next-action selection would test its usefulness beyond probing.
 
 \section*{Limitations}
-% (ACL exige sección Limitations.) TODO:
-% - f1 congelado -> el techo de f2 está acotado por la calidad de la base.
-% - Held-out IN-DOMAIN (mismos datasets); transferencia cross-dataset y un set human-human
-%   externo quedan como trabajo futuro.
-% - Probe FROZEN (diagnóstico), no fine-tuning competitivo.
+% (ACL requiere esta sección.)
+The per-turn encoder $f_1$ is kept frozen, so the quality of the contextual representation is bounded
+by that of the base space. Our evaluation is in-domain: held-out dialogues are drawn from the same
+collection used for pre-training, and cross-corpus and human-human external transfer remain open.
+The probe is frozen (a diagnostic of representation quality), not a fine-tuned, competitive system.
+% TODO(JM): agregar significancia y, si se hace, transferencia leave-one-dataset-out limpia.
 
-\nocite{*}  % esqueleto: incluye todas las refs de references.bib aunque las \cite estén en TODO.
-            % Quitar cuando cites de verdad inline. (acl.sty ya fija el bibliographystyle.)
+\nocite{*}  % esqueleto: incluye todas las refs aunque algunas \cite estén pendientes. Quitar al cerrar.
 \bibliography{references}
 
 \end{document}

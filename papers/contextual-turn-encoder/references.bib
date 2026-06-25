@@ -1,30 +1,111 @@
-% Referencias núcleo. TODO(JM): verificar páginas/DOI; agregar DSE, lit. de predicción de actos,
-% y el self-cite del paper 1 (ANN/memoria).
+% Keys alineadas con el paper de ANN (papers/ann-memory/References.bib) para coherencia entre los dos.
+% TODO(JM): completar páginas/venue del self-cite; agregar lit. de predicción de actos / next-action.
 
-@inproceedings{dialog2flow,
-  title     = {Dialog2Flow: Pre-training Soft-Contrastive Action-Driven Sentence Embeddings for Automatic Dialog Flow Extraction},
+@inproceedings{burdisso2024dialog2flow,
+  title     = {{D}ialog2{F}low: Pre-training Soft-Contrastive Action-Driven Sentence Embeddings for Automatic Dialog Flow Extraction},
   author    = {Burdisso, Sergio and Madikeri, Srikanth and Motlicek, Petr},
-  booktitle = {Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
-  year      = {2024}
+  booktitle = {Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing},
+  year      = {2024},
+  publisher = {Association for Computational Linguistics}
 }
 
-@inproceedings{bert,
-  title     = {{BERT}: Pre-training of Deep Bidirectional Transformers for Language Understanding},
+@inproceedings{devlin2019bert,
   author    = {Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},
+  title     = {{BERT}: Pre-training of Deep Bidirectional Transformers for Language Understanding},
   booktitle = {Proceedings of NAACL-HLT},
+  pages     = {4171--4186},
   year      = {2019}
 }
 
-@inproceedings{todbert,
-  title     = {{TOD-BERT}: Pre-trained Natural Language Understanding for Task-Oriented Dialogue},
+@inproceedings{reimers2019sentencebert,
+  author    = {Reimers, Nils and Gurevych, Iryna},
+  title     = {Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks},
+  booktitle = {Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing},
+  pages     = {3982--3992},
+  year      = {2019}
+}
+
+@inproceedings{wu2020todbert,
   author    = {Wu, Chien-Sheng and Hoi, Steven C.H. and Socher, Richard and Xiong, Caiming},
-  booktitle = {Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  title     = {{TOD-BERT}: Pre-trained Natural Language Understanding for Task-Oriented Dialogue},
+  booktitle = {Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing},
+  pages     = {917--929},
   year      = {2020}
 }
 
-@inproceedings{sbert,
-  title     = {Sentence-{BERT}: Sentence Embeddings using Siamese {BERT}-Networks},
-  author    = {Reimers, Nils and Gurevych, Iryna},
-  booktitle = {Proceedings of EMNLP-IJCNLP},
-  year      = {2019}
+@inproceedings{vaswani2017attention,
+  title     = {Attention Is All You Need},
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, {\L}ukasz and Polosukhin, Illia},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {30},
+  year      = {2017}
+}
+
+@article{ba2016layer,
+  title   = {Layer Normalization},
+  author  = {Ba, Jimmy Lei and Kiros, Jamie Ryan and Hinton, Geoffrey E.},
+  journal = {arXiv preprint arXiv:1607.06450},
+  year    = {2016}
+}
+
+@article{young2013pomdp,
+  author  = {Young, Steve and Ga\v{s}i\'{c}, Milica and Thomson, Blaise and Williams, Jason D.},
+  title   = {POMDP-Based Statistical Spoken Dialog Systems: A Review},
+  journal = {Proceedings of the IEEE},
+  volume  = {101}, number = {5}, pages = {1160--1179}, year = {2013}
+}
+
+@article{chen2017survey,
+  author  = {Chen, Hongshen and Liu, Xiaorui and Yin, Dawei and Tang, Jiliang},
+  title   = {A Survey on Dialogue Systems: Recent Advances and New Frontiers},
+  journal = {ACM SIGKDD Explorations Newsletter},
+  volume  = {19}, number = {2}, pages = {25--35}, year = {2017}
+}
+
+@inproceedings{wen2018sequence,
+  title     = {Sequence-to-Sequence Learning for Task-Oriented Dialogue with Dialogue State Representation},
+  author    = {Wen, Haoyang and Liu, Yijia and Che, Wanxiang and Qin, Libo and Liu, Ting},
+  booktitle = {Proceedings of the 27th International Conference on Computational Linguistics},
+  pages     = {3781--3792}, year = {2018}
+}
+
+@article{min2020dialogue,
+  title   = {Dialogue State Induction Using Neural Latent Variable Models},
+  author  = {Min, Qingkai and Qin, Libo and Teng, Zhiyang and Liu, Xiao and Zhang, Yue},
+  journal = {arXiv preprint arXiv:2008.05666}, year = {2020}
+}
+
+@inproceedings{hudecek2022latent,
+  title     = {Learning Interpretable Latent Dialogue Actions with Less Supervision},
+  author    = {Hude{\v{c}}ek, Vojt{\v{e}}ch and Du{\v{s}}ek, Ond{\v{r}}ej},
+  booktitle = {Proceedings of AACL-IJCNLP}, pages = {327--339}, year = {2022}
+}
+
+@article{liu2023vls,
+  title   = {Variational Latent-State {GPT} for Semi-Supervised Task-Oriented Dialog Systems},
+  author  = {Liu, Hong and Cai, Yucheng and Lin, Zhenru and Ou, Zhijian and Huang, Yi and Feng, Junlan},
+  journal = {IEEE/ACM Transactions on Audio, Speech, and Language Processing},
+  volume  = {31}, pages = {1777--1792}, year = {2023}
+}
+
+@inproceedings{wang2020minilm,
+  title     = {MiniLM: Deep Self-Attention Distillation for Task-Agnostic Compression of Pre-Trained Transformers},
+  author    = {Wang, Wenhui and Wei, Furu and Dong, Li and Bao, Hangbo and Yang, Nan and Zhou, Ming},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {33}, pages = {5776--5788}, year = {2020}
+}
+
+@inproceedings{song2020mpnet,
+  title     = {{MPNet}: Masked and Permuted Pre-training for Language Understanding},
+  author    = {Song, Kaitao and Tan, Xu and Qin, Tao and Lu, Jianfeng and Liu, Tie-Yan},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {33}, pages = {16857--16867}, year = {2020}
+}
+
+@inproceedings{fernandez2025retrieving,
+  author    = {Fern\'andez, Juan Manuel},
+  title     = {Retrieving the Flow: Dynamic Turn Representations for Conversational Memory with Approximate Nearest Neighbors},
+  booktitle = {TODO: venue},
+  year      = {2025},
+  note      = {Companion paper}
 }
