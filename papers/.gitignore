@@ -4,10 +4,12 @@
 *.out
 *.bbl
 *.blg
-*.pdf
 *.synctex.gz
 *.fls
 *.fdb_latexmk
 *.toc
 *.lof
 *.lot
+*.pdf
+# ...pero las figuras (incluidas las .pdf) son FUENTE, no build:
+!**/figures/**
