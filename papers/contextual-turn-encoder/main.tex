@@ -1,0 +1,136 @@
+\documentclass[11pt]{article}
+\usepackage[review]{acl}   % 'review' = numeración de líneas (borrador/submission anónima).
+                            % Para camera-ready: quitar 'review' -> \usepackage[]{acl}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+
+\title{A Pre-trained Contextual Turn Encoder for Task-Oriented Dialogue}
+
+% TODO(JM): orden/anonimización de autores. En 'review' va anónimo; abajo queda como borrador.
+\author{Juan Manuel Fern\'andez \\
+  Universidad Nacional de Luj\'an / UNSL \\
+  \texttt{...} \\\And
+  Sergio Burdisso \\
+  Idiap Research Institute \\\And
+  Marcelo Errecalde \\
+  Universidad Nacional de San Luis}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% TODO(JM): escribir al final, cuando el resto esté firme. Borrador de la historia:
+% Per-turn encoders (D2F, SBERT) codifican el turno aislado pero no su contexto en el
+% diálogo. Proponemos un encoder contextual de turnos pre-entrenado para TOD que, sobre una
+% base por-turno congelada (Dialog2Flow), aprende de forma self-supervised a integrar la
+% trayectoria del diálogo. Con un probe lineal congelado (estilo Devlin) medimos la
+% anticipación del próximo acto de diálogo sobre diálogos held-out (inductivo): nuestro
+% encoder supera a la base D2F, a la memoria EMA y a un modelo context-aware (TOD-BERT).
+\textit{[abstract — TODO]}
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+% Guía (prosa = TODO):
+% - Motivación: memoria/contexto conversacional en TOD; el turno como unidad.
+% - Gap: los encoders POR-TURNO (D2F, SBERT) codifican bien el turno pero no su contexto
+%   CROSS-turn (la trayectoria del diálogo).
+% - Contribución: f2, una CAPA contextual pre-entrenada self-supervised sobre una base
+%   por-turno congelada (D2F). Evidencia: captura la trayectoria de actos (predice act(t+1))
+%   de forma inductiva, donde los encoders por-turno y hasta un modelo context-aware fallan.
+% - Encuadre: EXTENSIÓN de la línea Dialog2Flow, no competencia.
+
+\section{Related Work}
+\label{sec:related}
+% - Sentence/turn encoders: Sentence-BERT \citep{sbert}; DSE [TODO cite].
+% - TOD-specific: TOD-BERT \citep{todbert}; Dialog2Flow \citep{dialog2flow}.
+% - Pre-entrenamiento self-supervised: BERT \citep{bert}.
+% - Embeddings dinámicos / memoria conversacional (nuestra línea ANN) [TODO self-cite paper 1].
+% - Predicción de actos de diálogo [TODO].
+
+\section{Method}
+\label{sec:method}
+% Pipeline de dos etapas:  texto --> f1 (D2F, CONGELADO) --> e_t --> f2 --> h_t.
+% f2 = Transformer sobre la secuencia de embeddings de turno (e_t) del diálogo.
+% Objetivos self-supervised: reconstrucción de turno enmascarado / predicción de next-turn
+%   + contrastivo (recuperación in-batch).  Modos: AR (causal) y Bidi (bidireccional).
+% Residual a la base:  h_t = LayerNorm(e_t + Delta)  (ancla h cerca de e_t).
+% DECISIÓN(JM): presentar UN modelo (recomendado: el BERT-fiel) + ablación, NO el lineage v1/v2/v3.
+
+\section{Experimental Setup}
+\label{sec:setup}
+% Datos: colección unificada de datasets TOD de Dialog2Flow \citep{dialog2flow} [N datasets, M turnos].
+% Protocolo HELD-OUT (inductivo): diálogos EXCLUIDOS del entrenamiento (semilla 42) -> mide
+%   generalización, no memorización.
+% Probe lineal CONGELADO (estilo Devlin \citep{bert}): se congela la representación y se
+%   entrena solo una regresión logística sobre:
+%     - act(t)   = acto del turno actual (CONTROL: vive en e_t).
+%     - act(t+1) = acto del PRÓXIMO turno (LA PRUEBA: requiere trayectoria).
+% Escalera de baselines: Random, SBERT, e_t(D2F), Acumulativo, EMA, TOD-BERT.
+% Métrica: macro-F1 (clases de acto desbalanceadas; reportar accuracy entre paréntesis).
+% TODO: significancia (bootstrap/Wilcoxon sobre diálogos); breakdown por dataset.
+
+\section{Results}
+\label{sec:results}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Representation & Acc. & Macro-F1 \\
+\midrule
+Random              & 0.421 & 0.060 \\
+Cumulative          & 0.577 & 0.458 \\
+SBERT (generic)     & 0.623 & 0.511 \\
+TOD-BERT (context)  & 0.676 & 0.572 \\
+$e_t$ (D2F, base)   & 0.679 & 0.567 \\
+EMA(0.6)            & 0.685 & 0.582 \\
+\textbf{Ours (Contextual-AR)} & \textbf{0.792} & \textbf{0.706} \\
+\bottomrule
+\end{tabular}
+\caption{Next-act anticipation (act(t+1)) on \textbf{held-out} dialogues (inductive),
+frozen linear probe. Our contextual encoder outperforms the per-turn base (D2F), the
+hand-crafted EMA memory, and a context-aware model (TOD-BERT).}
+% TODO: +significancia, +fila act(t) control, +breakdown por dataset.
+\label{tab:main}
+\end{table}
+
+% Lectura (prosa = TODO):
+% - +0.12 macro-F1 sobre D2F/EMA/TOD-BERT en datos NO vistos -> la capa contextual captura
+%   trayectoria que ningún encoder por-turno (ni un modelo context-aware) tiene.
+% - Control act(t): TODO (debería quedar parejo y alto -> f2 no pierde el acto actual).
+% - Robustez agnóstica a la base (sub-sección): f2 entrenado sobre mpnet / TOD-BERT como
+%   base muestra el mismo salto -> el contexto es del MÉTODO, no de D2F. TODO tabla.
+
+\section{Discussion}
+\label{sec:discussion}
+% - Qué captura: trayectoria de actos.  "Contextualiza != recupera": en retrieval (MSS) f2 no
+%   mejora -> D2F ya ES el retriever; f2 agrega contexto, no recuperación. (Disociación medida.)
+% - Techo intrínseco de act(t+1): es forecasting (entropía condicional + ruido de etiqueta;
+%   el bidi con leakage no pasa de ~0.89) -> leer los Delta contra el headroom, no contra 1.0.
+
+\section{Conclusion}
+\label{sec:conclusion}
+% - Un encoder contextual de turnos pre-entrenado para TOD; evidencia de captura de trayectoria.
+% Future work: codebook self-supervised (VQ / estados de flujo D2F) para un objetivo discreto
+%   escalable; fine-tuning conjunto f1+f2; barrido de la base f1.
+
+\section*{Limitations}
+% (ACL exige sección Limitations.) TODO:
+% - f1 congelado -> el techo de f2 está acotado por la calidad de la base.
+% - Held-out IN-DOMAIN (mismos datasets); transferencia cross-dataset y un set human-human
+%   externo quedan como trabajo futuro.
+% - Probe FROZEN (diagnóstico), no fine-tuning competitivo.
+
+\nocite{*}  % esqueleto: incluye todas las refs de references.bib aunque las \cite estén en TODO.
+            % Quitar cuando cites de verdad inline. (acl.sty ya fija el bibliographystyle.)
+\bibliography{references}
+
+\end{document}
