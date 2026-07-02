@@ -25,6 +25,15 @@ following-acc = `mean(pred == F)`. 2610 diálogos sintéticos, 6 funciones (azar
 Típicas: *yes please, thank you very much, that is perfect, no that's all*… Etiquetas: **coarse** = acto propio
 (8 clases); **fine** = acto @ slot/intent del turno previo (24 clases, ~50% "other", más ruidosa).
 
+**Las 8 clases `coarse`** (acto del propio turno): `agreement`, `offer`, `thank you`, `confirm`,
+`disagreement`, `good bye`, `inform`, `request`.
+
+**Las 24 clases `fine`** (acto **@** a-qué-responde) — `other` (~50%, combinaciones raras agrupadas) más:
+- `thank you@inform`, `disagreement@request`, `good bye@disagreement`
+- `agreement@` → event name · origin city · pickup location · confirm · hotel name · title · name · stylist name · restaurant name
+- `confirm@` → cost · starttime · car type · restaurantname
+- `offer@` → airline · hotel name · event name · restaurant name · departure time · pickup location · street address
+
 macro-F1 en test (n=435), IC bootstrap 95%:
 
 | repr. | coarse | fine |
