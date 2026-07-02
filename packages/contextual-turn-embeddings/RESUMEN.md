@@ -1,6 +1,6 @@
 # TRACE — resumen del trabajo e hipótesis a trabajar
 
-> Borrador para revisión (working tree, sin commitear). Detalle numérico en `benchmarks/cmp_results.md`.
+> Detalle numérico y metodología en [benchmarks/cmp_results.md](benchmarks/cmp_results.md).
 
 ## Qué es
 

@@ -1,7 +1,4 @@
-# Contextual Minimal Pairs (CMP) — resultados (en progreso, para revisar)
-
-> Generado de forma autónoma. **Sin commitear** (working tree). Los números están; la **interpretación
-> la decidís vos** — abajo dejo lecturas posibles, no veredictos.
+# Contextual Minimal Pairs (CMP) — resultados
 
 ## Etapa 1 — dataset (`cmp_build.py`)
 - **10 superficies cortas genuinamente ambiguas**, **2867 turnos-ejemplo** (split por diálogo: train 2002 / dev 430 / test 435).
@@ -73,4 +70,4 @@ Transformer sin entrenar no llegan. Task A queda como **validación del setup**,
 **Caveats honestos:** un solo config; following-acc 0.54 (alto vs azar, no perfecto — el turno aún tira a su
 función "natural"); faltan controles extra (contexto permutado, per-familia) y significancia formal del Task D.
 
-Archivos: `cmp_build.py`, `cmp_eval.py`, `cmp_counterfactual.py`, `figures/cmp_task{A,D}.csv`. **Sin commitear (working tree).**
+Archivos: `cmp_build.py`, `cmp_eval.py`, `cmp_counterfactual.py`, `figures/cmp_task{A,D}.csv`.
