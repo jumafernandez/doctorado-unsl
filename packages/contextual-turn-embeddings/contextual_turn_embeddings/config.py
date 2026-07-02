@@ -49,7 +49,7 @@ class ModelConfig:
     activation: str = "gelu"
     # Residual-to-base output: h_t = LayerNorm(e_t + delta). Anchors the contextual
     # embedding near its base embedding (requires output_dim == input_dim).
-    output_residual: bool = False
+    output_residual: bool = False  # SOLO v1 (custom): h_t = LN(e_t + delta). v2/v3 (BERT-fiel) lo IGNORAN.
     # --- v2 (BERT-faithful port). Additive and backward-compatible: v1 ignores these
     # (the v1 ContextualTurnModel never reads them). See docs/model/v2.md. ---
     arch: str = "v1"  # "v1" (custom, pre-LN) | "v2" (BERT-faithful, post-LN)

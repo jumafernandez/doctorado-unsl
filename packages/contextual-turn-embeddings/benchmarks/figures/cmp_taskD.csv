@@ -1,0 +1,6 @@
+rep,following_acc
+e_t (D2F),0.1659
+TRACE-AR(v2),0.5406
+TRACE-AR(v3@ep13),0.5663
+TRACE-AR(v3@ep5),0.5475
+TRACE-random,0.0989

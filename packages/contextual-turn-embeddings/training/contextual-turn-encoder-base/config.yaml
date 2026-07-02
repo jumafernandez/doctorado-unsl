@@ -18,8 +18,8 @@ model:
   use_speaker_embeddings: true
   num_speakers: 4
   layer_norm: true
-  output_residual: true    # h_t = LayerNorm(e_t + delta): ancla h_t cerca de e_t
-                           # (arregla la deriva ortogonal; análogo aprendido del acumulativo)
+  output_residual: false    # SOLO v1 (custom): h_t = LN(e_t + delta), ancla h_t a e_t.
+                           # v2/v3 (BERT-fiel) lo IGNORAN: la salida sale libre, como BERT. (en false por claridad)
 
 losses:
   # enabled=null -> resuelto por attention_mode (resolve_losses_for_mode):

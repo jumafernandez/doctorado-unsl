@@ -448,6 +448,8 @@ class ContextualTurnModelV2(BertTurnPreTrainedModel):
                 f"sequence length {seq_len} exceeds max_turns ({self.config.max_turns})"
             )
         sequence_output = self.bert(batch_embeddings, attention_mask, speaker_ids)
+        # FIEL a BERT: NO aplicamos residual externo de salida (output_residual es solo de v1).
+        # h_t sale libre del encoder, sin anclarse al e_t de entrada.
         return self.output_proj(sequence_output)
 
     @torch.no_grad()

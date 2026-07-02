@@ -1,0 +1,19 @@
+task,label,rep,macro_f1,ci_lo,ci_hi
+A,coarse,e_t (D2F),0.4898,0.4656,0.5139
+A,coarse,MeanPast,0.789,0.6989,0.8619
+A,coarse,EMA(0.6),0.8849,0.793,0.9446
+A,coarse,TRACE-AR (v2),0.8472,0.7641,0.9171
+A,coarse,TRACE-BIDI*(v2),0.8696,0.7837,0.9367
+A,coarse,TRACE-AR (v3@ep5),0.8099,0.7406,0.8802
+A,coarse,TRACE-AR (v3@ep13),0.8288,0.744,0.8992
+A,coarse,TRACE-BIDI*(v3),0.8613,0.7766,0.9226
+A,coarse,TRACE-random,0.8641,0.7735,0.9313
+A,fine,e_t (D2F),0.0841,0.0649,0.1035
+A,fine,MeanPast,0.6799,0.5827,0.7291
+A,fine,EMA(0.6),0.8833,0.8346,0.9136
+A,fine,TRACE-AR (v2),0.755,0.6741,0.7984
+A,fine,TRACE-BIDI*(v2),0.7396,0.6546,0.7857
+A,fine,TRACE-AR (v3@ep5),0.7666,0.6944,0.8097
+A,fine,TRACE-AR (v3@ep13),0.7655,0.689,0.8085
+A,fine,TRACE-BIDI*(v3),0.687,0.5923,0.7309
+A,fine,TRACE-random,0.6967,0.6058,0.7446
