@@ -34,6 +34,23 @@ Típicas: *yes please, thank you very much, that is perfect, no that's all*… E
 - `confirm@` → cost · starttime · car type · restaurantname
 - `offer@` → airline · hotel name · event name · restaurant name · departure time · pickup location · street address
 
+**Cómo se construye** (sin modelo, `cmp_build.py`): una superficie entra al dataset si es **frecuente**
+(≥100 ocurrencias), **ambigua** (el 2º acto más común pesa ≥20%) y **corta** (≤6 palabras). Split **por
+diálogo** (70/15/15, seed 42) para que no se filtren turnos del mismo diálogo entre partes.
+
+**Muestra (filas reales) — el minimal pair a la vista:**
+
+| `surf` | `coarse` | `fine` | `prev_act` | split |
+|---|---|---|---|---|
+| yes please | confirm | confirm@starttime | inform | dev |
+| yes please | agreement | agreement@name | confirm | train |
+| no, that's all | disagreement | disagreement@request | request | train |
+| no, that's all | agreement | agreement@confirm | confirm | train |
+
+Misma `surf`, `coarse` distinto según a qué responde (`prev_act`) → la superficie no determina la función;
+la separa el contexto. (Cada fila trae `row_id` = índice a su `e_t`; el probe entrena en `split=train` y
+mide en `split=test`.)
+
 macro-F1 en test (n=435), IC bootstrap 95%:
 
 | repr. | coarse | fine |

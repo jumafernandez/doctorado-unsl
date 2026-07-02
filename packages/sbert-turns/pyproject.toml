@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sbert-turns"
+version = "0.0.1"
+description = "Sentence-BERT de diálogos: CLS/SEP estilo RoBERTa sobre encoders contextuales de turnos (TRACE)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Juan Manuel Fernandez" }]
+keywords = ["dialogue", "sentence-embeddings", "sbert", "bert", "roberta", "tod", "contextual-turns"]
+
+dependencies = [
+    "numpy",
+    "pandas",
+]
+
+# Nota: el paquete hermano `contextual-turn-embeddings` se instala por separado
+# (es un paquete local del monorepo, trae torch y el modelo TRACE):
+#   pip install -e packages/contextual-turn-embeddings
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["sbert_turns*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
